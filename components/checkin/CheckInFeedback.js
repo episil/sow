@@ -23,7 +23,6 @@ export default function CheckInFeedback({ profile }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // 初始化隨機選取一個問題
   useEffect(() => {
     shuffleQuestion();
   }, []);
@@ -107,16 +106,6 @@ export default function CheckInFeedback({ profile }) {
         <h3 className="text-slate-700 font-black text-lg relative z-10 leading-relaxed">
           {question}
         </h3>
-        
-        {/* 志工身分標籤 */}
-        <div className="mt-4 flex flex-wrap gap-2 relative z-10">
-          <span className="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded-full">
-            {profile.branch}
-          </span>
-          <span className="px-3 py-1 bg-slate-200 text-slate-600 text-[10px] font-black rounded-full">
-            {profile.volunteer_group}
-          </span>
-        </div>
       </div>
 
       {/* Input Area */}
