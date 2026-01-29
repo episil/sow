@@ -1,4 +1,14 @@
-'use client';
+將這個組件 
+
+<div className="mt-8">
+  <CheckinView profile={profile} />
+</div>
+
+<div className="mt-10">
+  <SpeciesList currentBranch={profile.branch} />
+</div>
+
+放在 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -256,4 +266,4 @@ function NavButton({ active, onClick, icon, label }) {
       </span>
     </button>
   );
-}
+} 的簽到組件下方
