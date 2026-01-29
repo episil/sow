@@ -148,7 +148,7 @@ export default function CheckinView({ profile }) {
       </div>
 
       <p className="mt-6 text-[10px] text-slate-300 font-bold text-center">
-        溫馨提示：系統會自動根據您的分會過濾地點
+        溫馨提示：系統會自動根據您的所屬分會過濾地點
       </p>
     </div>
   );
