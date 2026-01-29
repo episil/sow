@@ -8,15 +8,109 @@ import SignInView from '@/components/auth/SignInView';
 import CheckinView from '@/components/checkin/CheckinView';
 import CheckInFeedback from '@/components/checkin/CheckInFeedback';
 import SpeciesIntelligence from '@/components/intelligence/SpeciesIntelligence';
-import SpeciesList from '@/components/SpeciesList'; // 👈 確保匯入新組件
+import SpeciesList from '@/components/SpeciesList'; // 👈 匯入新組件
 import UserStats from '@/components/stats/UserStats';
 import Leaderboard from '@/components/stats/Leaderboard';
 import SOWtalks from '@/components/SOWtalks';
 
-// ... 匯入圖標保持不變 ...
+// 匯入圖標
+import { 
+  Home, 
+  Camera, 
+  Trophy, 
+  User as UserIcon, 
+  LogOut,
+  Leaf,
+  ArrowRight,
+  Sparkles,
+  Settings2
+} from 'lucide-react';
 
 export default function App() {
-  // ... 狀態設定 (session, profile, loading 等) 保持不變 ...
+  const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('home'); 
+  const [showSOWtalks, setShowSOWtalks] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchProfile(session.user.id);
+      else setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchProfile(session.user.id);
+      else {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: userId, 
+              full_name: session?.user?.user_metadata?.full_name || '新夥伴',
+              nature_name: '',
+              branch: '未設定',
+              volunteer_group: '未設定'
+            }
+          ])
+          .select()
+          .single();
+
+        if (!insertError) setProfile(newProfile);
+      } else if (!error && data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error("處理 Profile 時發生異常:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setActiveTab('home');
+    setShowSOWtalks(false);
+    setIsEditingProfile(false);
+  };
+
+  const handleProfileUpdate = (updatedProfile) => {
+    setProfile(updatedProfile);
+    setIsEditingProfile(false);
+  };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="animate-pulse flex flex-col items-center">
+        <Leaf className="text-blue-500 mb-4" size={40} />
+        <p className="text-slate-400 font-bold text-sm tracking-widest">載入荒野生活中...</p>
+      </div>
+    </div>
+  );
+
+  if (!session || (!profile && !loading)) {
+    return <SignInView onLoginSuccess={handleProfileUpdate} />;
+  }
 
   const renderContent = () => {
     if (showSOWtalks) {
@@ -49,7 +143,6 @@ export default function App() {
       case 'home':
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* 頁首：個人資訊 */}
             <header className="flex justify-between items-center mb-2 px-2">
               <div>
                 <h1 className="text-2xl font-black text-slate-800">你好，{profile.nature_name || profile.full_name}</h1>
@@ -69,15 +162,15 @@ export default function App() {
               </button>
             </header>
 
-            {/* 1. 簽到組件 */}
+            {/* 簽到組件 */}
             <CheckinView profile={profile} />
 
-            {/* 2. 物種情報牆 (依照您的要求放置於此) */}
-            <div className="mt-10">
+            {/* 最新物種發現牆 (依照要求放置於此) */}
+            <div className="mt-8">
               <SpeciesList currentBranch={profile.branch} />
             </div>
 
-            {/* 3. 荒野 Show 活動卡片 */}
+            {/* 近期熱門活動卡片 */}
             <div 
               onClick={() => setShowSOWtalks(true)}
               className="group relative overflow-hidden w-full p-6 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-[2.5rem] text-white cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-emerald-100"
@@ -100,16 +193,73 @@ export default function App() {
               </div>
             </div>
 
-            {/* 4. 簽到反饋內容 */}
+            {/* 填寫回饋組件 */}
             <CheckInFeedback profile={profile} />
           </div>
         );
-      
-      // ... 其他 case (camera, rank, profile) 保持不變 ...
+      case 'camera':
+        return <div className="animate-in fade-in duration-500"><SpeciesIntelligence profile={profile} /></div>;
+      case 'rank':
+        return <div className="animate-in fade-in duration-500"><Leaderboard /></div>;
+      case 'profile':
+        return <div className="animate-in fade-in duration-500"><UserStats profile={profile} /></div>;
       default:
         return null;
     }
   };
 
-  // ... 其餘 return (main/nav) 保持不變 ...
+  return (
+    <main className="min-h-screen bg-slate-50 pb-32 pt-8 px-4 md:max-w-md md:mx-auto relative">
+      <div className="max-w-full overflow-hidden">
+        {renderContent()}
+      </div>
+
+      {!showSOWtalks && !isEditingProfile && (
+        <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-4 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
+          <NavButton 
+            active={activeTab === 'home'} 
+            onClick={() => setActiveTab('home')} 
+            icon={<Home size={22} />} 
+            label="首頁" 
+          />
+          <NavButton 
+            active={activeTab === 'camera'} 
+            onClick={() => setActiveTab('camera')} 
+            icon={<Camera size={22} />} 
+            label="情報" 
+          />
+          <NavButton 
+            active={activeTab === 'rank'} 
+            onClick={() => setActiveTab('rank')} 
+            icon={<Trophy size={22} />} 
+            label="排行" 
+          />
+          <NavButton 
+            active={activeTab === 'profile'} 
+            onClick={() => setActiveTab('profile')} 
+            icon={<UserIcon size={22} />} 
+            label="我的" 
+          />
+        </nav>
+      )}
+    </main>
+  );
+}
+
+function NavButton({ active, onClick, icon, label }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 transition-all duration-300 ${
+        active ? 'text-blue-600 scale-110' : 'text-slate-300 hover:text-slate-400'
+      }`}
+    >
+      <div className={`${active ? 'bg-blue-50 p-2 rounded-xl' : ''}`}>
+        {icon}
+      </div>
+      <span className={`text-[10px] font-black transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`}>
+        {label}
+      </span>
+    </button>
+  );
 }
