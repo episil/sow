@@ -61,12 +61,16 @@ export default function SignInView({ onLoginSuccess }) {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    });
-  };
+const handleGoogleLogin = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin // 登入後自動跳回您的網站首頁
+    }
+  });
+  
+  if (error) console.error('登入出錯:', error.message);
+};
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
