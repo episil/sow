@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase'; // 確保路徑指向您的配置
+import { supabase } from '@/lib/supabase';
 import { LogIn, User, MapPin, Users, Hash, Phone, Leaf, CheckCircle, Loader2 } from 'lucide-react';
 
 const BRANCHES = ["台北分會", "桃園分會", "新竹分會", "台中分會", "雲林分會", "嘉義分會", "台南分會", "高雄分會", "台東分會", "花蓮分會", "宜蘭分會"];
@@ -24,7 +24,7 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
 
   // 1. 初始化與現有資料填入邏輯
   useEffect(() => {
-    // 如果有傳入現有資料 (個資修改模式)
+    // 編輯模式優先處理：防止跳轉閃爍
     if (existingProfile) {
       setFormData({
         full_name: existingProfile.full_name || '',
@@ -34,23 +34,29 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
         training_period: existingProfile.training_period || '',
         phone: existingProfile.phone || ''
       });
+      
+      // 直接顯示表單，不走 checkUser
       setShowRegisterForm(true);
       setLoading(false);
       
-      // 確保內部 user 狀態與 profile 同步
-      supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+      // 背景同步 Auth User 資料，供提交時使用 ID
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) setUser(user);
+      });
     } else {
-      // 正常登入檢測模式
+      // 正常登入註冊模式
       checkUser();
     }
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN') {
+      // 僅在非編輯模式下處理登入跳轉
+      if (event === 'SIGNED_IN' && !existingProfile) {
         const currentUser = session?.user;
         setUser(currentUser);
-        if (!existingProfile) await checkProfile(currentUser);
+        await checkProfile(currentUser);
       }
     });
+
     return () => authListener.subscription.unsubscribe();
   }, [existingProfile]);
 
@@ -91,12 +97,13 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
     }
   };
 
-  // 2. 整合後的提交邏輯 (Upsert)
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
+      if (!user) throw new Error("尚未取得使用者認證資訊");
+
       const { data, error } = await supabase
         .from('profiles')
         .upsert({
@@ -109,8 +116,6 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
         .single();
 
       if (error) throw error;
-      
-      // 成功後回傳更新後的資料
       onLoginSuccess(data);
     } catch (error) {
       alert('儲存失敗：' + error.message);
@@ -122,7 +127,7 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
   if (loading) return (
     <div className="min-h-[400px] flex flex-col items-center justify-center text-slate-400">
       <Loader2 className="animate-spin mb-2" size={32} />
-      <p className="font-bold text-sm">系統初始化中...</p>
+      <p className="font-bold text-sm">載入資料中...</p>
     </div>
   );
 
@@ -130,7 +135,6 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
     <div className={`flex flex-col items-center justify-center ${existingProfile ? '' : 'min-h-screen bg-slate-50 p-6'}`}>
       <div className={`w-full max-w-md bg-white rounded-[2.5rem] shadow-xl overflow-hidden p-8 border border-slate-100 ${existingProfile ? 'shadow-none border-none p-0' : ''}`}>
         
-        {/* 如果是新註冊才顯示標題 */}
         {!existingProfile && (
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-2xl mb-4">
@@ -141,7 +145,7 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
           </div>
         )}
 
-        {!user ? (
+        {!user && !existingProfile ? (
           <button
             onClick={handleGoogleLogin}
             className="w-full py-4 bg-white border-2 border-slate-100 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
@@ -154,7 +158,7 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
             {!existingProfile && (
               <div className="mb-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
                 <CheckCircle className="text-blue-500" size={20} />
-                <p className="text-xs text-blue-700 font-bold">驗證成功！請填寫志工基本資料以完成註冊。</p>
+                <p className="text-xs text-blue-700 font-bold">驗證成功！請完成資料設定。</p>
               </div>
             )}
 
@@ -184,11 +188,14 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
               disabled={isSubmitting}
               className="w-full mt-6 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:bg-slate-300 flex items-center justify-center gap-2"
             >
-              {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : (existingProfile ? '儲存並更新個資' : '完成註冊，開始使用')}
+              {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : (existingProfile ? '儲存並更新個資' : '開始使用荒野生活')}
             </button>
           </form>
         ) : (
-          <div className="text-center py-10 text-slate-400">跳轉中...</div>
+          <div className="text-center py-10 text-slate-400">
+             <Loader2 className="animate-spin mx-auto mb-2" />
+             載入中...
+          </div>
         )}
 
         {!existingProfile && (
@@ -199,23 +206,14 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
   );
 }
 
-// 輔助組件保持不變...
 function InputItem({ icon, label, placeholder, value, onChange, required = false }) {
   return (
     <div className="text-left">
-      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
+      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">{label} {required && "*"}</label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">{icon}</span>
-        <input
-          required={required}
-          type="text"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-300"
-        />
+        <input required={required} type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-100 transition-all" />
       </div>
     </div>
   );
@@ -224,17 +222,11 @@ function InputItem({ icon, label, placeholder, value, onChange, required = false
 function SelectItem({ icon, label, options, value, onChange, required = false }) {
   return (
     <div className="text-left">
-      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
+      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">{label} {required && "*"}</label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">{icon}</span>
-        <select
-          required={required}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none"
-        >
+        <select required={required} value={value} onChange={e => onChange(e.target.value)}
+          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none">
           <option value="">請選擇</option>
           {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
