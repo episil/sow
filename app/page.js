@@ -51,18 +51,44 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId) => {
+const fetchProfile = async (userId) => {
+  try {
+    // 1. 先嘗試獲取現有資料
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
-    
-    if (!error && data) {
+
+    if (error && error.code === 'PGRST116') {
+      // 2. 如果找不到資料 (說明是新志工)，立刻幫他建立一筆基礎資料
+      console.log("偵測到新志工，正在建立個人檔案...");
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert([
+          { 
+            id: userId, 
+            full_name: session?.user?.user_metadata?.full_name || '新夥伴',
+            nature_name: '', // 讓志工之後再填
+            branch: '未設定',
+            volunteer_group: '未設定'
+          }
+        ])
+        .select()
+        .single();
+
+      if (!insertError) setProfile(newProfile);
+    } else if (!error && data) {
+      // 3. 找到現有資料，直接帶入
       setProfile(data);
     }
+  } catch (err) {
+    console.error("處理 Profile 時發生異常:", err);
+  } finally {
+    // 無論成功或失敗，都要關閉載入狀態，避免畫面卡死
     setLoading(false);
-  };
+  }
+};
 
   // 登出功能
   const handleSignOut = async () => {
