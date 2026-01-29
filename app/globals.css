@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #0f172a; /* slate-900 */
+}
+
+/* 基礎設定 */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent; /* 移除行動端點擊時出現的藍色高亮框 */
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-noto), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  line-height: 1.5;
+  /* 優化 iOS 橡皮筋回彈效果，避免滑動時背景閃白 */
+  overscroll-behavior-y: none; 
+}
+
+/* 隱藏捲軸但保留捲動功能 (讓 UI 更像 App) */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- 自定義組件樣式 --- */
+
+@layer components {
+  /* 表單輸入框通用樣式 */
+  .input-primary {
+    @apply w-full px-5 py-4 bg-white border border-slate-100 rounded-[2rem] text-sm font-bold 
+           focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all;
+  }
+
+  /* 2.0 版標誌性大圓角卡片 */
+  .card-2xl {
+    @apply bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm;
+  }
+}
+
+/* --- Calendar Heatmap 樣式美化 (配合 UserStats.js) --- */
+
+.react-calendar-heatmap .color-empty {
+  fill: #ebedf0; /* 空白格顏色 */
+}
+
+/* 綠色階梯 (符合荒野風格) */
+.react-calendar-heatmap .color-github-1 { fill: #c6e48b; }
+.react-calendar-heatmap .color-github-2 { fill: #7bc96f; }
+.react-calendar-heatmap .color-github-3 { fill: #239a3b; }
+.react-calendar-heatmap .color-github-4 { fill: #196127; }
+
+/* 讓熱圖方塊帶點圓角 */
+.react-calendar-heatmap rect {
+  rx: 2px;
+  ry: 2px;
+  transition: fill 0.3s ease;
+}
+
+/* --- 動畫定義 --- */
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 優化文字渲染 */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* --- 針對 Next.js Image 組件的優化 --- */
+img {
+  max-width: 100%;
+  height: auto;
+}
