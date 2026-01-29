@@ -65,11 +65,14 @@ const handleGoogleLogin = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin // 登入後自動跳回您的網站首頁
+      // 使用 window.location.origin 確保無論在 localhost 或 Vercel 都能正確跳回
+      redirectTo: `${window.location.origin}`, 
     }
   });
   
-  if (error) console.error('登入出錯:', error.message);
+  if (error) {
+    alert("登入失敗：" + error.message);
+  }
 };
 
   const handleRegisterSubmit = async (e) => {
