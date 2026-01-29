@@ -8,7 +8,7 @@ import SignInView from '@/components/auth/SignInView';
 import CheckinView from '@/components/checkin/CheckinView';
 import CheckInFeedback from '@/components/checkin/CheckInFeedback';
 import SpeciesIntelligence from '@/components/intelligence/SpeciesIntelligence';
-import SpeciesList from '@/components/intelligence/SpeciesList'; // 👈 確保匯入新組件
+import SpeciesList from '@/components/SpeciesList'; // 👈 確保匯入新組件
 import UserStats from '@/components/stats/UserStats';
 import Leaderboard from '@/components/stats/Leaderboard';
 import SOWtalks from '@/components/SOWtalks';
