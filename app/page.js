@@ -14,7 +14,7 @@ import SOWtalks from '@/components/SOWtalks';
 
 // 匯入圖標
 import { 
-  Home, 
+  MapPinned, // 更換為更符合「在地簽到」語意的圖標
   Camera, 
   Trophy, 
   User as UserIcon, 
@@ -161,10 +161,8 @@ export default function App() {
               </button>
             </header>
 
-            {/* 1. 簽到組件 */}
             <CheckinView profile={profile} />
 
-            {/* 2. 近期熱門活動卡片 */}
             <div 
               onClick={() => setShowSOWtalks(true)}
               className="group relative overflow-hidden w-full p-6 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-[2.5rem] text-white cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-emerald-100"
@@ -187,7 +185,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* 3. 填寫回饋組件 */}
             <CheckInFeedback profile={profile} />
           </div>
         );
@@ -213,7 +210,7 @@ export default function App() {
           <NavButton 
             active={activeTab === 'home'} 
             onClick={() => setActiveTab('home')} 
-            icon={<Home size={22} />} 
+            icon={<MapPinned size={22} />} 
             label="簽到" 
           />
           <NavButton 
