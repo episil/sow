@@ -8,7 +8,6 @@ import SignInView from '@/components/auth/SignInView';
 import CheckinView from '@/components/checkin/CheckinView';
 import CheckInFeedback from '@/components/checkin/CheckInFeedback';
 import SpeciesIntelligence from '@/components/intelligence/SpeciesIntelligence';
-import SpeciesList from '@/components/SpeciesList'; // 👈 匯入新組件
 import UserStats from '@/components/stats/UserStats';
 import Leaderboard from '@/components/stats/Leaderboard';
 import SOWtalks from '@/components/SOWtalks';
@@ -162,15 +161,10 @@ export default function App() {
               </button>
             </header>
 
-            {/* 簽到組件 */}
+            {/* 1. 簽到組件 */}
             <CheckinView profile={profile} />
 
-            {/* 最新物種發現牆 (依照要求放置於此) */}
-            <div className="mt-8">
-              <SpeciesList currentBranch={profile.branch} />
-            </div>
-
-            {/* 近期熱門活動卡片 */}
+            {/* 2. 近期熱門活動卡片 */}
             <div 
               onClick={() => setShowSOWtalks(true)}
               className="group relative overflow-hidden w-full p-6 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-[2.5rem] text-white cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-emerald-100"
@@ -193,7 +187,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* 填寫回饋組件 */}
+            {/* 3. 填寫回饋組件 */}
             <CheckInFeedback profile={profile} />
           </div>
         );
