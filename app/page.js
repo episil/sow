@@ -214,7 +214,7 @@ export default function App() {
             active={activeTab === 'home'} 
             onClick={() => setActiveTab('home')} 
             icon={<Home size={22} />} 
-            label="首頁" 
+            label="簽到" 
           />
           <NavButton 
             active={activeTab === 'camera'} 
@@ -232,7 +232,7 @@ export default function App() {
             active={activeTab === 'profile'} 
             onClick={() => setActiveTab('profile')} 
             icon={<UserIcon size={22} />} 
-            label="我的" 
+            label="貢獻" 
           />
         </nav>
       )}
