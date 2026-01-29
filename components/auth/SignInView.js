@@ -15,7 +15,6 @@ export default function SignInView({ onLoginSuccess }) {
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 註冊表單狀態
   const [formData, setFormData] = useState({
     full_name: '',
     nature_name: '',
@@ -61,19 +60,18 @@ export default function SignInView({ onLoginSuccess }) {
     }
   };
 
-const handleGoogleLogin = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      // 使用 window.location.origin 確保無論在 localhost 或 Vercel 都能正確跳回
-      redirectTo: `${window.location.origin}`, 
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}`, 
+      }
+    });
+    
+    if (error) {
+      alert("登入失敗：" + error.message);
     }
-  });
-  
-  if (error) {
-    alert("登入失敗：" + error.message);
-  }
-};
+  };
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
@@ -101,7 +99,6 @@ const handleGoogleLogin = async () => {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-xl overflow-hidden p-8 border border-slate-100">
         
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-2xl mb-4">
             <Leaf className="text-blue-600" size={32} />
@@ -111,7 +108,6 @@ const handleGoogleLogin = async () => {
         </div>
 
         {!user ? (
-          /* Step 1: Login Button */
           <button
             onClick={handleGoogleLogin}
             className="w-full py-4 bg-white border-2 border-slate-100 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
@@ -120,7 +116,6 @@ const handleGoogleLogin = async () => {
             <span className="font-black text-slate-700">使用 Google 帳號登入</span>
           </button>
         ) : showRegisterForm ? (
-          /* Step 2: Register Form */
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             <div className="mb-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
               <CheckCircle className="text-blue-500" size={20} />
@@ -131,7 +126,7 @@ const handleGoogleLogin = async () => {
               <InputItem icon={<User size={16}/>} label="真實姓名" placeholder="王小明" 
                 value={formData.full_name} onChange={v => setFormData({...formData, full_name: v})} required />
               <InputItem icon={<Leaf size={16}/>} label="自然名" placeholder="小草" 
-                value={formData.nature_name} onChange={v => setFormData({...formData, nature_name: v})} />
+                value={formData.nature_name} onChange={v => setFormData({...formData, nature_name: v})} required />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -143,7 +138,7 @@ const handleGoogleLogin = async () => {
 
             <div className="grid grid-cols-2 gap-3">
               <InputItem icon={<Hash size={16}/>} label="期別" placeholder="解 25" 
-                value={formData.training_period} onChange={v => setFormData({...formData, training_period: v})} />
+                value={formData.training_period} onChange={v => setFormData({...formData, training_period: v})} required />
               <InputItem icon={<Phone size={16}/>} label="手機" placeholder="0912..." 
                 value={formData.phone} onChange={v => setFormData({...formData, phone: v})} required />
             </div>
@@ -166,11 +161,12 @@ const handleGoogleLogin = async () => {
   );
 }
 
-// 輔助組件：輸入框
 function InputItem({ icon, label, placeholder, value, onChange, required = false }) {
   return (
     <div className="text-left">
-      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">{label}</label>
+      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">{icon}</span>
         <input
@@ -186,11 +182,12 @@ function InputItem({ icon, label, placeholder, value, onChange, required = false
   );
 }
 
-// 輔助組件：下拉選單
 function SelectItem({ icon, label, options, value, onChange, required = false }) {
   return (
     <div className="text-left">
-      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">{label}</label>
+      <label className="block text-[10px] font-black text-slate-400 mb-1 ml-1 uppercase">
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">{icon}</span>
         <select
