@@ -21,17 +21,18 @@ import {
   LogOut,
   Leaf,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Settings2
 } from 'lucide-react';
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('home'); // home, camera, rank, profile
-  const [showSOWtalks, setShowSOWtalks] = useState(false); // 控制 SOWtalks 子頁面顯示
+  const [activeTab, setActiveTab] = useState('home'); 
+  const [showSOWtalks, setShowSOWtalks] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false); // 控制個資修改模式
 
-  // 1. 初始化檢查登入狀態
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -51,53 +52,53 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-const fetchProfile = async (userId) => {
-  try {
-    // 1. 先嘗試獲取現有資料
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error && error.code === 'PGRST116') {
-      // 2. 如果找不到資料 (說明是新志工)，立刻幫他建立一筆基礎資料
-      console.log("偵測到新志工，正在建立個人檔案...");
-      const { data: newProfile, error: insertError } = await supabase
+  const fetchProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
         .from('profiles')
-        .insert([
-          { 
-            id: userId, 
-            full_name: session?.user?.user_metadata?.full_name || '新夥伴',
-            nature_name: '', // 讓志工之後再填
-            branch: '未設定',
-            volunteer_group: '未設定'
-          }
-        ])
-        .select()
+        .select('*')
+        .eq('id', userId)
         .single();
 
-      if (!insertError) setProfile(newProfile);
-    } else if (!error && data) {
-      // 3. 找到現有資料，直接帶入
-      setProfile(data);
-    }
-  } catch (err) {
-    console.error("處理 Profile 時發生異常:", err);
-  } finally {
-    // 無論成功或失敗，都要關閉載入狀態，避免畫面卡死
-    setLoading(false);
-  }
-};
+      if (error && error.code === 'PGRST116') {
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: userId, 
+              full_name: session?.user?.user_metadata?.full_name || '新夥伴',
+              nature_name: '',
+              branch: '未設定',
+              volunteer_group: '未設定'
+            }
+          ])
+          .select()
+          .single();
 
-  // 登出功能
+        if (!insertError) setProfile(newProfile);
+      } else if (!error && data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error("處理 Profile 時發生異常:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setActiveTab('home');
     setShowSOWtalks(false);
+    setIsEditingProfile(false);
   };
 
-  // 門禁處理
+  // 處理個人資料更新成功
+  const handleProfileUpdate = (updatedProfile) => {
+    setProfile(updatedProfile);
+    setIsEditingProfile(false); // 關閉修改視窗
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="animate-pulse flex flex-col items-center">
@@ -107,11 +108,11 @@ const fetchProfile = async (userId) => {
     </div>
   );
 
-  if (!session || !profile) {
-    return <SignInView onLoginSuccess={(p) => setProfile(p)} />;
+  // 如果未登入或正在填寫初始資料
+  if (!session || (!profile && !loading)) {
+    return <SignInView onLoginSuccess={handleProfileUpdate} />;
   }
 
-  // 2. 分頁內容渲染邏輯
   const renderContent = () => {
     if (showSOWtalks) {
       return (
@@ -122,6 +123,24 @@ const fetchProfile = async (userId) => {
       );
     }
 
+    // 優先檢查是否處於個資編輯模式
+    if (isEditingProfile) {
+      return (
+        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-lg font-black text-slate-800">修改個人資料</h2>
+            <button 
+              onClick={() => setIsEditingProfile(false)}
+              className="text-sm font-bold text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full"
+            >
+              取消修改
+            </button>
+          </div>
+          <SignInView onLoginSuccess={handleProfileUpdate} existingProfile={profile} />
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'home':
         return (
@@ -129,17 +148,24 @@ const fetchProfile = async (userId) => {
             <header className="flex justify-between items-center mb-2 px-2">
               <div>
                 <h1 className="text-2xl font-black text-slate-800">你好，{profile.nature_name || profile.full_name}</h1>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{profile.branch} · {profile.volunteer_group}</p>
+                <div className="flex items-center gap-2 mt-1">
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{profile.branch} · {profile.volunteer_group}</p>
+                   <button 
+                     onClick={() => setIsEditingProfile(true)}
+                     className="p-1 text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                     title="個資修改"
+                   >
+                     <Settings2 size={14} />
+                   </button>
+                </div>
               </div>
               <button onClick={handleSignOut} className="p-3 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-red-500 transition-colors">
                 <LogOut size={20} />
               </button>
             </header>
 
-            {/* 功能卡片區 */}
             <CheckinView profile={profile} />
 
-            {/* SOWtalks 入口卡片 */}
             <div 
               onClick={() => setShowSOWtalks(true)}
               className="group relative overflow-hidden w-full p-6 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-[2.5rem] text-white cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-emerald-100"
@@ -182,7 +208,7 @@ const fetchProfile = async (userId) => {
         {renderContent()}
       </div>
 
-      {!showSOWtalks && (
+      {!showSOWtalks && !isEditingProfile && (
         <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-4 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
           <NavButton 
             active={activeTab === 'home'} 
