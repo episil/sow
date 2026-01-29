@@ -10,7 +10,7 @@ import CheckInFeedback from '@/components/checkin/CheckInFeedback';
 import SpeciesIntelligence from '@/components/intelligence/SpeciesIntelligence';
 import UserStats from '@/components/stats/UserStats';
 import Leaderboard from '@/components/stats/Leaderboard';
-import SOWtalks from '@/components/SOWtalks'; // 確保路徑正確
+import SOWtalks from '@/components/SOWtalks';
 
 // 匯入圖標
 import { 
@@ -76,7 +76,7 @@ export default function App() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="animate-pulse flex flex-col items-center">
         <Leaf className="text-blue-500 mb-4" size={40} />
-        <p className="text-slate-400 font-bold">載入荒野生活中...</p>
+        <p className="text-slate-400 font-bold text-sm tracking-widest">載入荒野生活中...</p>
       </div>
     </div>
   );
@@ -87,12 +87,11 @@ export default function App() {
 
   // 2. 分頁內容渲染邏輯
   const renderContent = () => {
-    // 如果正在顯示 SOWtalks，則暫時蓋掉當前 Tab 的內容
     if (showSOWtalks) {
       return (
         <SOWtalks 
           onBack={() => setShowSOWtalks(false)} 
-          registrationUrl="https://example.com/register" // 填入您的報名連結
+          registrationUrl="https://example.com/register" 
         />
       );
     }
@@ -132,7 +131,6 @@ export default function App() {
                   <ArrowRight size={20} />
                 </div>
               </div>
-              {/* 背景裝飾圖案 */}
               <div className="absolute -right-4 -bottom-4 opacity-10">
                 <Leaf size={120} />
               </div>
@@ -154,12 +152,10 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-slate-50 pb-32 pt-8 px-4 md:max-w-md md:mx-auto relative">
-      {/* 主要內容區 */}
       <div className="max-w-full overflow-hidden">
         {renderContent()}
       </div>
 
-      {/* 底部導覽列 (Bottom Navigation) - 當顯示 SOWtalks 時隱藏，讓視覺更專注 */}
       {!showSOWtalks && (
         <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-4 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
           <NavButton 
@@ -192,7 +188,6 @@ export default function App() {
   );
 }
 
-// 底部導覽按鈕組件
 function NavButton({ active, onClick, icon, label }) {
   return (
     <button 
