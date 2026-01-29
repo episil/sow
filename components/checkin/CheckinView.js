@@ -105,7 +105,7 @@ export default function CheckinView({ profile }) {
   return (
     <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative">
       
-      {/* 幫助說明彈窗 - 使用 Backdrop Blur 提升質感 */}
+      {/* 幫助說明彈窗 */}
       {showHelp && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col">
@@ -131,8 +131,8 @@ export default function CheckinView({ profile }) {
                   <div className="space-y-4 text-slate-600">
                     <div className="flex gap-3">
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">1</span>
-                      <p className="text-sm font-bold leading-relaxed text-slate-600">
-                        選擇定觀地點。
+                      <p className="text-sm font-bold leading-relaxed">
+                        選擇定觀地點（或自由定點）。
                         <span className="block text-xs font-medium text-slate-400 mt-1">自由定點：不受 GPS 距離限制，供特殊情況使用。</span>
                       </p>
                     </div>
@@ -144,8 +144,8 @@ export default function CheckinView({ profile }) {
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">3</span>
                       <p className="text-sm font-bold leading-relaxed">填妥資料後點擊確認簽到即完成。</p>
                     </div>
-                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
-                      <p className="text-[11px] text-amber-700 font-bold">服勤提醒：定觀半天，依荒野規定服勤時間為一小時。</p>
+                    <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                      <p className="text-[11px] text-blue-700 font-bold leading-relaxed">服勤提醒：定觀半天，依荒野規定服勤時間為一小時。</p>
                     </div>
                   </div>
                 </section>
@@ -155,10 +155,10 @@ export default function CheckinView({ profile }) {
                   <h4 className="flex items-center gap-2 text-sm font-black text-slate-800 mb-3 uppercase tracking-wider">
                     <Smartphone size={16} /> 常見問題 Q&A
                   </h4>
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     <div>
-                      <p className="text-[13px] font-black text-blue-600 mb-2">Q: 如何在瀏覽器開啟 GPS 定位？</p>
-                      <ul className="text-xs space-y-1.5 text-slate-500 font-bold ml-1">
+                      <p className="text-[13px] font-black text-slate-700 mb-2">Q: 如何在瀏覽器開啟 GPS 定位？</p>
+                      <ul className="text-xs space-y-1.5 text-slate-500 font-bold ml-1 pl-1">
                         <li>• Android：Chrome 設定 ➜ 網站設定 ➜ 位置 ➜ 開啟</li>
                         <li>• iOS：系統設定 ➜ 隱私權 ➜ 定位服務 ➜ 允許瀏覽器使用</li>
                         <li>• 電腦版：點擊網址列左側鎖頭 ➜ 位置 ➜ 允許</li>
@@ -166,24 +166,34 @@ export default function CheckinView({ profile }) {
                     </div>
                     <div>
                       <p className="text-[13px] font-black text-red-500 mb-1">Q: 出現「Application error」？</p>
-                      <p className="text-xs text-slate-500 font-bold ml-1">A: 請刪除瀏覽紀錄或開啟無痕模式重新瀏覽。</p>
+                      <p className="text-xs text-slate-500 font-bold ml-1 pl-1">A: 請刪除瀏覽紀錄或開啟無痕模式重新瀏覽。</p>
                     </div>
                   </div>
                 </section>
 
-                {/* 加入桌面 */}
-                <section className="p-4 bg-slate-50 rounded-2xl">
-                  <p className="text-[11px] font-black text-slate-400 mb-2 uppercase tracking-tighter text-center">將系統加入桌面</p>
-                  <div className="grid grid-cols-2 gap-4 text-[10px] font-bold text-slate-500">
-                    <div className="text-center">iOS Safari 分享 ➜ 加入主畫面</div>
-                    <div className="text-center border-l border-slate-200">Android Chrome 選單 ➜ 安裝</div>
+                {/* 將系統加入桌面 */}
+                <section className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <div className="h-[1px] w-4 bg-slate-200" />
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">將系統加入桌面</p>
+                    <div className="h-[1px] w-4 bg-slate-200" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
+                      <span className="text-[11px] font-black text-slate-400 uppercase">iOS</span>
+                      <span className="text-xs font-bold text-slate-600">Safari 分享 ➜ 加入主畫面</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
+                      <span className="text-[11px] font-black text-slate-400 uppercase">Android</span>
+                      <span className="text-xs font-bold text-slate-600">Chrome 選單 ➜ 安裝應用程式</span>
+                    </div>
                   </div>
                 </section>
 
                 {/* 聯絡資訊 */}
                 <footer className="pt-2 pb-4 text-center">
-                  <p className="text-[10px] text-slate-300 font-bold mb-2">遇到系統問題？請聯繫資訊志工</p>
-                  <a href="mailto:episil@gmail.com" className="inline-flex items-center gap-2 text-blue-500 font-black text-sm">
+                  <p className="text-[10px] text-slate-300 font-bold mb-2 uppercase tracking-tight">遇到系統問題？請聯繫資訊志工</p>
+                  <a href="mailto:episil@gmail.com" className="inline-flex items-center gap-2 text-blue-500 font-black text-sm hover:opacity-70 transition-opacity">
                     <Mail size={14} /> episil@gmail.com
                   </a>
                 </footer>
