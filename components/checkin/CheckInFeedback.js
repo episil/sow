@@ -23,6 +23,7 @@ export default function CheckInFeedback({ profile }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // 初始化隨機選取一個問題
   useEffect(() => {
     shuffleQuestion();
   }, []);
