@@ -12,8 +12,8 @@ import {
   X, 
   Info, 
   Smartphone, 
-  ExternalLink,
-  Mail
+  Mail,
+  Apple
 } from 'lucide-react';
 
 export default function CheckinView({ profile }) {
@@ -103,12 +103,12 @@ export default function CheckinView({ profile }) {
   };
 
   return (
-    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative">
+    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative text-slate-800">
       
       {/* 幫助說明彈窗 */}
       {showHelp && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col border border-slate-100">
             <div className="p-6 overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
@@ -128,24 +128,24 @@ export default function CheckinView({ profile }) {
                   <h4 className="flex items-center gap-2 text-sm font-black text-blue-600 mb-3 uppercase tracking-wider">
                     <div className="w-1 h-4 bg-blue-600 rounded-full" /> 簽到步驟
                   </h4>
-                  <div className="space-y-4 text-slate-600">
+                  <div className="space-y-4 text-slate-600 font-bold">
                     <div className="flex gap-3">
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">1</span>
-                      <p className="text-sm font-bold leading-relaxed">
+                      <p className="text-sm leading-relaxed">
                         選擇定觀地點（或自由定點）。
                         <span className="block text-xs font-medium text-slate-400 mt-1">自由定點：不受 GPS 距離限制，供特殊情況使用。</span>
                       </p>
                     </div>
                     <div className="flex gap-3">
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">2</span>
-                      <p className="text-sm font-bold leading-relaxed">開啟 GPS 定位，確認在樣點 <span className="text-blue-600">1公里</span> 內。</p>
+                      <p className="text-sm leading-relaxed">開啟 GPS 定位，確認在樣點 <span className="text-blue-600">1公里</span> 內。</p>
                     </div>
                     <div className="flex gap-3">
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">3</span>
-                      <p className="text-sm font-bold leading-relaxed">填妥資料後點擊確認簽到即完成。</p>
+                      <p className="text-sm leading-relaxed">填妥資料後點擊確認簽到即完成。</p>
                     </div>
                     <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100">
-                      <p className="text-[11px] text-blue-700 font-bold leading-relaxed">服勤提醒：定觀半天，依荒野規定服勤時間為一小時。</p>
+                      <p className="text-[11px] text-blue-700 leading-relaxed">服勤提醒：定觀半天，依荒野規定服勤時間為一小時。</p>
                     </div>
                   </div>
                 </section>
@@ -179,13 +179,23 @@ export default function CheckinView({ profile }) {
                     <div className="h-[1px] w-4 bg-slate-200" />
                   </div>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
-                      <span className="text-[11px] font-black text-slate-400">iOS</span>
-                      <span className="text-xs font-bold text-slate-600">Safari 分享 ➜ 加入主畫面</span>
+                    {/* iOS 卡片 */}
+                    <div className="flex items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
+                      <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-lg mr-3">
+                        <Apple size={16} className="text-slate-600" />
+                      </div>
+                      <div className="flex-1 flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-600">Safari 分享 ➜ 加入主畫面</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
-                      <span className="text-[11px] font-black text-slate-400">Android</span>
-                      <span className="text-xs font-bold text-slate-600">Chrome 選單 ➜ 安裝應用程式</span>
+                    {/* Android 卡片 */}
+                    <div className="flex items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
+                      <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-lg mr-3">
+                        <Smartphone size={16} className="text-slate-600" />
+                      </div>
+                      <div className="flex-1 flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-600">Chrome 選單 ➜ 安裝應用程式</span>
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -226,14 +236,14 @@ export default function CheckinView({ profile }) {
             </div>
             <button 
               onClick={() => setShowHelp(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border border-transparent active:border-blue-100"
             >
               <HelpCircle size={22} />
             </button>
           </div>
 
-          <div className="space-y-6">
-            <div className="text-left">
+          <div className="space-y-6 text-left font-bold">
+            <div>
               <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">選擇今日定觀點</label>
               <div className="relative">
                 <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
@@ -262,18 +272,18 @@ export default function CheckinView({ profile }) {
                   ) : (
                     <div className="flex items-center gap-1.5">
                       <Loader2 className="animate-spin text-slate-300" size={12} />
-                      <span className="text-[10px] text-slate-300 font-bold">定位中...</span>
+                      <span className="text-[10px] text-slate-300">定位中...</span>
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            <div className="text-left">
+            <div>
               <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">簽到日期</label>
               <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-2xl text-slate-400">
                 <Calendar size={18} />
-                <span className="text-sm font-bold">{new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span className="text-sm">{new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </div>
             </div>
 
