@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 
 // 匯入所有功能組件
 import SignInView from '@/components/auth/SignInView';
+import AdminLogin from '@/components/auth/AdminLogin'; // 新增匯入管理員登入
 import CheckinView from '@/components/checkin/CheckinView';
 import CheckInFeedback from '@/components/checkin/CheckInFeedback';
 import SpeciesIntelligence from '@/components/intelligence/SpeciesIntelligence';
@@ -23,8 +24,7 @@ import {
   Settings2,
   MessageSquare,
   Footprints,
-  ShieldCheck,
-  ChevronRight
+  ShieldCheck
 } from 'lucide-react';
 
 export default function App() {
@@ -34,6 +34,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home'); 
   const [showSOWtalks, setShowSOWtalks] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false); // 新增狀態
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -93,6 +94,7 @@ export default function App() {
     setActiveTab('home');
     setShowSOWtalks(false);
     setIsEditingProfile(false);
+    setShowAdminLogin(false);
   };
 
   const handleProfileUpdate = (updatedProfile) => {
@@ -114,6 +116,11 @@ export default function App() {
   }
 
   const renderContent = () => {
+    // 優先判斷是否顯示管理員登入
+    if (showAdminLogin) {
+      return <AdminLogin onBack={() => setShowAdminLogin(false)} />;
+    }
+
     if (showSOWtalks) {
       return (
         <SOWtalks 
@@ -165,7 +172,6 @@ export default function App() {
 
             <CheckinView profile={profile} />
 
-            {/* 新增底部功能卡片 */}
             <div className="grid grid-cols-2 gap-4">
               <div 
                 onClick={() => setActiveTab('profile')}
@@ -179,6 +185,7 @@ export default function App() {
               </div>
 
               <div 
+                onClick={() => setShowAdminLogin(true)}
                 className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 mb-3 group-hover:scale-110 transition-transform">
@@ -209,7 +216,7 @@ export default function App() {
         {renderContent()}
       </div>
 
-      {!showSOWtalks && !isEditingProfile && (
+      {!showSOWtalks && !isEditingProfile && !showAdminLogin && (
         <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-2 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
           <NavButton 
             active={activeTab === 'home'} 
