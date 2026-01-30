@@ -170,8 +170,8 @@ export default function CheckinView({ profile }) {
                 {/* 參考圖片重新排版：將系統加入桌面 */}
                 <section className="text-left space-y-4">
                   <div className="flex items-center gap-3">
-                    <Smartphone className="text-green-600" size={20} />
-                    <h4 className="text-lg font-black text-slate-700">將系統加入桌面</h4>
+                    <Smartphone className="text-green-600" size={16} />
+                    <h4 className="text-lg font-black text-slate-800">將系統加入桌面</h4>
                   </div>
                   
                   <div className="space-y-2">
