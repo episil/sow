@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Camera, MapPin, Send, Loader2, Sparkles, Navigation, MessageCircle } from 'lucide-react';
+import { Camera, MapPin, Send, Loader2, Sparkles, Navigation, MessageCircle, CheckCircle2 } from 'lucide-react';
 import PhotoUpload from './PhotoUpload';
 
 export default function SpeciesIntelligence({ profile }) {
@@ -13,11 +13,13 @@ export default function SpeciesIntelligence({ profile }) {
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState(null);
+  const [gpsSource, setGpsSource] = useState('browser'); // 新增：追蹤 GPS 來源
 
   // 自動獲取 GPS 位置 (瀏覽器定位)
   const getGPSLocation = () => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
+    setGpsSource('browser'); // 重置為瀏覽器定位
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -38,7 +40,6 @@ export default function SpeciesIntelligence({ profile }) {
 
     setIsSubmitting(true);
     try {
-      // 1. 上傳照片
       const fileExt = photoFile.name.split('.').pop();
       const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
       const filePath = `uploads/${fileName}`;
@@ -53,7 +54,6 @@ export default function SpeciesIntelligence({ profile }) {
         .from('species-photos')
         .getPublicUrl(filePath);
 
-      // 2. 寫入資料庫記錄
       const { error: dbError } = await supabase
         .from('species_reports')
         .insert([{
@@ -97,12 +97,13 @@ export default function SpeciesIntelligence({ profile }) {
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         <div className="space-y-2">
           <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">上傳照片</label>
-          {/* 修改點：接住從照片提取的座標 */}
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
             onLocationExtracted={(coords) => {
-              console.log("成功從照片導入座標:", coords);
               setLocation({ lat: coords.lat, lng: coords.lng });
+              setGpsSource('photo'); // 標記來源為照片
+              // 3秒後自動移除提示狀態，但保留座標
+              setTimeout(() => setGpsSource('browser'), 5000);
             }}
             clearTrigger={status === 'success'} 
           />
@@ -134,14 +135,20 @@ export default function SpeciesIntelligence({ profile }) {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+          {/* 座標區塊：新增匯入成功提示 */}
+          <div className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-500 ${gpsSource === 'photo' ? 'bg-emerald-50 ring-2 ring-emerald-100' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${gpsSource === 'photo' ? 'bg-emerald-500 text-white' : 'bg-blue-100 text-blue-600'}`}>
                 <MapPin size={20} />
               </div>
               <div>
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                  目前定位座標
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">目前定位座標</span>
+                  {gpsSource === 'photo' && (
+                    <span className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full animate-pulse">
+                      <CheckCircle2 size={10} /> 照片位置已匯入
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs font-bold text-slate-600">
                   {isLocating ? '定位中...' : location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : '未獲取位置'}
