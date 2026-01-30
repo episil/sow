@@ -14,8 +14,7 @@ import {
   Smartphone, 
   Share,
   MoreVertical,
-  Mail,
-  Apple
+  Mail
 } from 'lucide-react';
 
 export default function CheckinView({ profile }) {
@@ -27,6 +26,14 @@ export default function CheckinView({ profile }) {
   const [showHelp, setShowHelp] = useState(false);
   const [userCoords, setUserCoords] = useState(null);
   const [distance, setDistance] = useState(null);
+  // 用於即時更新畫面上顯示的時間
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // 每分鐘更新一次顯示的時間，確保簽到資訊準確
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchBranchLocations = async () => {
@@ -167,7 +174,6 @@ export default function CheckinView({ profile }) {
                   </div>
                 </section>
 
-                {/* 參考圖片重新排版：將系統加入桌面 */}
                 <section className="text-left space-y-4">
                   <div className="flex items-center gap-3">
                     <Smartphone className="text-green-600" size={16} />
@@ -175,7 +181,6 @@ export default function CheckinView({ profile }) {
                   </div>
                   
                   <div className="space-y-2">
-                    {/* iOS Safari */}
                     <div className="flex justify-between items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-blue-100 transition-all">
                       <div className="flex items-center gap-3">
                         <Share className="text-blue-500" size={16} />
@@ -188,7 +193,6 @@ export default function CheckinView({ profile }) {
                       </div>
                     </div>
 
-                    {/* Android Chrome */}
                     <div className="flex justify-between items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-orange-100 transition-all">
                       <div className="flex items-center gap-3">
                         <MoreVertical className="text-orange-500" size={16} />
@@ -281,10 +285,20 @@ export default function CheckinView({ profile }) {
             </div>
 
             <div className="text-left">
-              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest text-left">簽到日期</label>
-              <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-2xl text-slate-400 text-left">
+              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest text-left">簽到日期與時間</label>
+              <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-2xl text-slate-500 text-left">
                 <Calendar size={18} />
-                <span className="text-sm font-bold text-left">{new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span className="text-sm font-bold text-left">
+                  {currentTime.toLocaleString('zh-TW', { 
+                    timeZone: 'Asia/Taipei', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false 
+                  })}
+                </span>
               </div>
             </div>
 
