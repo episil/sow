@@ -96,7 +96,7 @@ export default function SpeciesIntelligence({ profile }) {
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         <div className="space-y-2">
-          <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">上傳照片</label>
+        
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
             onLocationExtracted={(coords) => {
