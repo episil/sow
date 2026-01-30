@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
-import { X, ImageIcon, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
+import { X, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
 
 export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
   const [preview, setPreview] = useState(null);
@@ -79,7 +79,6 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
           </div>
           <div className="text-center">
             <p className="text-sm font-black text-slate-500">上傳照片</p>
-            {/* 已移除 MAX SIZE 字樣 */}
             <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-1">Select from photo library</p>
           </div>
         </button>
@@ -118,20 +117,6 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
           >
             <X size={20} />
           </button>
-        </div>
-      )}
-
-      {!preview && (
-        <div className="mt-4 flex items-center justify-center gap-4 text-slate-300">
-          <div className="flex items-center gap-1">
-            <ImageIcon size={12} />
-            <span className="text-[9px] font-bold uppercase tracking-tight">Lite Upload</span>
-          </div>
-          <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-          <div className="flex items-center gap-1">
-            <CheckCircle2 size={12} />
-            <span className="text-[9px] font-bold uppercase tracking-tight">Optimize OK</span>
-          </div>
         </div>
       )}
     </div>
