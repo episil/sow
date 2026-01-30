@@ -94,7 +94,7 @@ export default function SpeciesIntelligence({ profile }) {
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         
-        {/* 1. 照片上傳區塊 (提示移動至中下方) */}
+        {/* 1. 照片上傳區塊 */}
         <div className="relative group">
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
@@ -106,10 +106,10 @@ export default function SpeciesIntelligence({ profile }) {
             clearTrigger={status === 'success'} 
           />
           
-          {/* 簡潔的置中提示標籤 */}
+          {/* 中間偏下方的簡潔提示標籤 */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none w-full flex justify-center">
-            <span className="text-[9px] font-black text-slate-400 bg-white/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-100/50 shadow-sm tracking-tighter">
-              匯入照片即自動導入 GPS 座標
+            <span className="text-[10px] font-black text-slate-400 bg-white/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-100/50 shadow-sm tracking-tighter">
+              自動導入照片 GPS 座標
             </span>
           </div>
         </div>
