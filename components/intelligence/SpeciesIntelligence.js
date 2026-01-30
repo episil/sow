@@ -99,9 +99,7 @@ export default function SpeciesIntelligence({ profile }) {
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         <div className="space-y-2">
-          <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">
-            上傳照片
-          </label>
+
           {/* 傳入 clearTrigger 當狀態為 success 時重置預覽圖 */}
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
