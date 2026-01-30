@@ -184,14 +184,14 @@ export default function CheckinView({ profile }) {
                     <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
                       <div className="flex items-center gap-2 text-slate-400">
                         <Apple size={16} />
-                        <span className="text-[11px] font-black">iOS</span>
+                       // <span className="text-[11px] font-black">iOS</span>
                       </div>
                       <span className="text-xs font-bold text-slate-600">Safari 分享 ➜ 加入主畫面</span>
                     </div>
                     <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
                       <div className="flex items-center gap-2 text-slate-400">
                         <Bot size={16} />
-                        <span className="text-[11px] font-black">Android</span>
+                       // <span className="text-[11px] font-black">Android</span>
                       </div>
                       <span className="text-xs font-bold text-slate-600">Chrome 選單 ➜ 安裝應用程式</span>
                     </div>
