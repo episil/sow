@@ -20,7 +20,11 @@ import {
   User as UserIcon, 
   LogOut,
   Leaf,
-  Settings2
+  Settings2,
+  MessageSquare,
+  Footprints,
+  ShieldCheck,
+  ChevronRight
 } from 'lucide-react';
 
 export default function App() {
@@ -121,7 +125,7 @@ export default function App() {
 
     if (isEditingProfile) {
       return (
-        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+        <div className="space-y-6 animate-in slide-in-from-right duration-300 text-left">
           <div className="flex items-center justify-between px-2">
             <h2 className="text-lg font-black text-slate-800">修改個人資料</h2>
             <button 
@@ -139,9 +143,9 @@ export default function App() {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
             <header className="flex justify-between items-center mb-2 px-2">
-              <div className="text-left">
+              <div>
                 <h1 className="text-2xl font-black text-slate-800">你好，{profile.nature_name || profile.full_name}</h1>
                 <div className="flex items-center gap-2 mt-1">
                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{profile.branch} · {profile.volunteer_group}</p>
@@ -161,15 +165,39 @@ export default function App() {
 
             <CheckinView profile={profile} />
 
-            <CheckInFeedback profile={profile} />
+            {/* 新增底部功能卡片 */}
+            <div className="grid grid-cols-2 gap-4">
+              <div 
+                onClick={() => setActiveTab('profile')}
+                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 mb-3 group-hover:scale-110 transition-transform">
+                  <Footprints size={20} />
+                </div>
+                <h4 className="text-sm font-black text-slate-800 mb-1">我的足跡</h4>
+                <p className="text-[10px] text-slate-400 font-bold">查看簽到歷史</p>
+              </div>
+
+              <div 
+                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 mb-3 group-hover:scale-110 transition-transform">
+                  <ShieldCheck size={20} />
+                </div>
+                <h4 className="text-sm font-black text-slate-800 mb-1">維護管理</h4>
+                <p className="text-[10px] text-slate-400 font-bold">系統管理員專區</p>
+              </div>
+            </div>
           </div>
         );
+      case 'feedback':
+        return <div className="animate-in fade-in duration-500 text-left"><CheckInFeedback profile={profile} /></div>;
       case 'camera':
-        return <div className="animate-in fade-in duration-500"><SpeciesIntelligence profile={profile} /></div>;
+        return <div className="animate-in fade-in duration-500 text-left"><SpeciesIntelligence profile={profile} /></div>;
       case 'rank':
-        return <div className="animate-in fade-in duration-500"><Leaderboard /></div>;
+        return <div className="animate-in fade-in duration-500 text-left"><Leaderboard /></div>;
       case 'profile':
-        return <div className="animate-in fade-in duration-500"><UserStats profile={profile} /></div>;
+        return <div className="animate-in fade-in duration-500 text-left"><UserStats profile={profile} /></div>;
       default:
         return null;
     }
@@ -182,29 +210,35 @@ export default function App() {
       </div>
 
       {!showSOWtalks && !isEditingProfile && (
-        <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-4 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
+        <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-2 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
           <NavButton 
             active={activeTab === 'home'} 
             onClick={() => setActiveTab('home')} 
-            icon={<MapPinned size={22} />} 
+            icon={<MapPinned size={20} />} 
             label="簽到" 
+          />
+          <NavButton 
+            active={activeTab === 'feedback'} 
+            onClick={() => setActiveTab('feedback')} 
+            icon={<MessageSquare size={20} />} 
+            label="回饋" 
           />
           <NavButton 
             active={activeTab === 'camera'} 
             onClick={() => setActiveTab('camera')} 
-            icon={<Camera size={22} />} 
+            icon={<Camera size={20} />} 
             label="情報" 
           />
           <NavButton 
             active={activeTab === 'rank'} 
             onClick={() => setActiveTab('rank')} 
-            icon={<Trophy size={22} />} 
+            icon={<Trophy size={20} />} 
             label="排行" 
           />
           <NavButton 
             active={activeTab === 'profile'} 
             onClick={() => setActiveTab('profile')} 
-            icon={<UserIcon size={22} />} 
+            icon={<UserIcon size={20} />} 
             label="貢獻" 
           />
         </nav>
@@ -217,7 +251,7 @@ function NavButton({ active, onClick, icon, label }) {
   return (
     <button 
       onClick={onClick}
-      className={`flex flex-col items-center gap-1 transition-all duration-300 ${
+      className={`flex flex-col items-center gap-1 transition-all duration-300 min-w-[56px] ${
         active ? 'text-blue-600 scale-110' : 'text-slate-300 hover:text-slate-400'
       }`}
     >
