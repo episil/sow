@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
-import { Camera, X, ImageIcon, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
+import { X, ImageIcon, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
 
 export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
   const [preview, setPreview] = useState(null);
@@ -20,16 +20,15 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
   // 壓縮設定維持 200KB (maxSizeMB: 0.2)
   const compressionOptions = {
     maxSizeMB: 0.2,          // 壓縮至 0.2MB (200KB) 以下
-    maxWidthOrHeight: 1200, // 保持寬高上限，確保清晰度
+    maxWidthOrHeight: 1200, // 保持寬高上限
     useWebWorker: true,
-    initialQuality: 0.7     // 初始壓縮品質設定為 0.7 以加快處理速度
+    initialQuality: 0.7
   };
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // 重置狀態
     setError(null);
     setIsCompressing(true);
 
@@ -38,10 +37,10 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
       const localPreview = URL.createObjectURL(file);
       setPreview(localPreview);
 
-      // 2. 執行壓縮
+      // 2. 執行壓縮至 200KB
       const compressedFile = await imageCompression(file, compressionOptions);
       
-      // 3. 回傳壓縮後的檔案給父組件
+      // 3. 回傳壓縮後的檔案
       onImageProcessed(compressedFile);
     } catch (err) {
       console.error('壓縮失敗:', err);
@@ -59,7 +58,7 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
 
   return (
     <div className="w-full text-left">
-      {/* 隱藏的 Input：移除 capture 屬性以彈出複合選單 */}
+      {/* 隱藏的 Input：移除所有 capture 屬性，確保直接跳轉「選擇照片」選單 */}
       <input
         type="file"
         accept="image/*"
@@ -80,11 +79,12 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
           </div>
           <div className="text-center">
             <p className="text-sm font-black text-slate-500">上傳照片</p>
-            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-1">Select from album or camera</p>
+            {/* 已移除 MAX SIZE 字樣 */}
+            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-1">Select from photo library</p>
           </div>
         </button>
       ) : (
-        /* 已上傳狀態 */
+        /* 已上傳預覽狀態 */
         <div className="relative w-full h-64 rounded-[2.5rem] overflow-hidden shadow-lg border border-white">
           <img 
             src={preview} 
