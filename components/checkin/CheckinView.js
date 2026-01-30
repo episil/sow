@@ -180,11 +180,11 @@ export default function CheckinView({ profile }) {
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
-                      <span className="text-[11px] font-black text-slate-400 uppercase">iOS</span>
+                      <span className="text-[11px] font-black text-slate-400">iOS</span>
                       <span className="text-xs font-bold text-slate-600">Safari 分享 ➜ 加入主畫面</span>
                     </div>
                     <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
-                      <span className="text-[11px] font-black text-slate-400 uppercase">Android</span>
+                      <span className="text-[11px] font-black text-slate-400">Android</span>
                       <span className="text-xs font-bold text-slate-600">Chrome 選單 ➜ 安裝應用程式</span>
                     </div>
                   </div>
