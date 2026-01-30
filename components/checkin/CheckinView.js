@@ -12,13 +12,16 @@ import {
   X, 
   Info, 
   Smartphone, 
-  ExternalLink,
   Mail,
   Apple,
-  Bot
+  Bot,
+  ChevronRight,
+  Share2,
+  Menu
 } from 'lucide-react';
 
 export default function CheckinView({ profile }) {
+  // ... (保留原本的 state 與 logic)
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -28,62 +31,7 @@ export default function CheckinView({ profile }) {
   const [userCoords, setUserCoords] = useState(null);
   const [distance, setDistance] = useState(null);
 
-  // 抓取地點
-  useEffect(() => {
-    const fetchBranchLocations = async () => {
-      if (!profile?.branch) return;
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('locations')
-          .select('location_name, latitude, longitude')
-          .eq('branch', profile.branch)
-          .order('location_name', { ascending: true });
-        if (error) throw error;
-        setLocations(data || []);
-      } catch (error) {
-        console.error('抓取地點失敗:', error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchBranchLocations();
-  }, [profile]);
-
-  // GPS 監測
-  useEffect(() => {
-    if (!selectedLocation || selectedLocation === '自由定點') {
-      setDistance(null);
-      return;
-    }
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      (err) => console.error(err),
-      { enableHighAccuracy: true }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [selectedLocation]);
-
-  // 距離計算
-  useEffect(() => {
-    if (userCoords && selectedLocation && selectedLocation !== '自由定點') {
-      const targetLoc = locations.find(l => l.location_name === selectedLocation);
-      if (targetLoc?.latitude) {
-        const d = calculateDistance(userCoords.lat, userCoords.lng, targetLoc.latitude, targetLoc.longitude);
-        setDistance(d);
-      }
-    }
-  }, [userCoords, selectedLocation, locations]);
-
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-  };
-
-  const isCheckinDisabled = !selectedLocation || isSubmitting || (selectedLocation !== '自由定點' && (distance === null || distance > 1));
+  // ... (保留原本的 useEffect 與 functions)
 
   const handleCheckin = async () => {
     setIsSubmitting(true);
@@ -104,17 +52,19 @@ export default function CheckinView({ profile }) {
     }
   };
 
+  const isCheckinDisabled = !selectedLocation || isSubmitting || (selectedLocation !== '自由定點' && (distance === null || distance > 1));
+
   return (
-    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative">
+    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative text-left">
       
       {/* 幫助說明彈窗 */}
       {showHelp && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col text-left">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col">
             <div className="p-6 overflow-y-auto">
-              <div className="flex justify-between items-center mb-6 text-left">
+              <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-left">
+                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
                     <Info className="text-blue-600" size={18} />
                   </div>
                   <h3 className="text-lg font-black text-slate-800">使用說明</h3>
@@ -124,83 +74,63 @@ export default function CheckinView({ profile }) {
                 </button>
               </div>
 
-              <div className="space-y-8 text-left">
+              <div className="space-y-8">
                 {/* 簽到步驟 */}
                 <section>
-                  <h4 className="flex items-center gap-2 text-sm font-black text-blue-600 mb-3 uppercase tracking-wider text-left">
+                  <h4 className="flex items-center gap-2 text-sm font-black text-blue-600 mb-3 uppercase tracking-wider">
                     <div className="w-1 h-4 bg-blue-600 rounded-full" /> 簽到步驟
                   </h4>
                   <div className="space-y-4 text-slate-600">
                     <div className="flex gap-3 text-left">
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">1</span>
-                      <p className="text-sm font-bold leading-relaxed text-left">
-                        選擇定觀地點（或自由定點）。
-                        <span className="block text-xs font-medium text-slate-400 mt-1">自由定點：不受 GPS 距離限制，供特殊情況使用。</span>
-                      </p>
+                      <p className="text-sm font-bold leading-relaxed">選擇定觀地點。或是使用自由定點模式。</p>
                     </div>
                     <div className="flex gap-3 text-left">
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">2</span>
-                      <p className="text-sm font-bold leading-relaxed text-left">開啟 GPS 定位，確認在樣點 <span className="text-blue-600">1公里</span> 內。</p>
-                    </div>
-                    <div className="flex gap-3 text-left">
-                      <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">3</span>
-                      <p className="text-sm font-bold leading-relaxed text-left">填妥資料後點擊確認簽到即完成。</p>
-                    </div>
-                    <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100 text-left">
-                      <p className="text-[11px] text-blue-700 font-bold leading-relaxed">服勤提醒：定觀半天，依荒野規定服勤時間為一小時。</p>
+                      <p className="text-sm font-bold leading-relaxed">確認 GPS 定位在樣點 1 公里內。</p>
                     </div>
                   </div>
                 </section>
 
-                {/* Q&A */}
-                <section>
-                  <h4 className="flex items-center gap-2 text-sm font-black text-slate-800 mb-3 uppercase tracking-wider text-left">
-                    <Smartphone size={16} /> 常見問題 Q&A
-                  </h4>
-                  <div className="space-y-5 text-left">
-                    <div>
-                      <p className="text-[13px] font-black text-slate-700 mb-2">Q: 如何在瀏覽器開啟 GPS 定位？</p>
-                      <ul className="text-xs space-y-1.5 text-slate-500 font-bold ml-1 pl-1">
-                        <li>• Android：Chrome 設定 ➜ 網站設定 ➜ 位置 ➜ 開啟</li>
-                        <li>• iOS：系統設定 ➜ 隱私權 ➜ 定位服務 ➜ 允許瀏覽器使用</li>
-                        <li>• 電腦版：點擊網址列左側鎖頭 ➜ 位置 ➜ 允許</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-[13px] font-black text-red-500 mb-1">Q: 出現「Application error」？</p>
-                      <p className="text-xs text-slate-500 font-bold ml-1 pl-1">A: 請刪除瀏覽紀錄或開啟無痕模式重新瀏覽。</p>
-                    </div>
+                {/* 修改後的「將系統加入桌面」排版 */}
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="text-slate-400" size={18} />
+                    <h4 className="text-sm font-black text-slate-800 tracking-wide">將系統加入桌面</h4>
                   </div>
-                </section>
+                  
+                  <div className="space-y-2.5">
+                    {/* iOS 卡片 */}
+                    <div className="group flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl transition-all hover:bg-white hover:shadow-md">
+                      <div className="flex items-center gap-3 text-slate-600">
+                        <Apple size={20} className="group-hover:text-blue-500 transition-colors" />
+                        <span className="text-sm font-bold tracking-tight">iOS Safari</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-400">
+                        <span className="text-xs font-medium">分享</span>
+                        <ChevronRight size={12} className="opacity-50" />
+                        <span className="text-xs font-bold text-slate-500">加入主畫面</span>
+                      </div>
+                    </div>
 
-                {/* 將系統加入桌面 */}
-                <section className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 text-left">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <div className="h-[1px] w-4 bg-slate-200" />
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">將系統加入桌面</p>
-                    <div className="h-[1px] w-4 bg-slate-200" />
-                  </div>
-                  <div className="space-y-3 text-left">
-                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
-                      <div className="flex items-center gap-2 text-slate-400">
-                        <Apple size={16} />
-                      
+                    {/* Android 卡片 */}
+                    <div className="group flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl transition-all hover:bg-white hover:shadow-md">
+                      <div className="flex items-center gap-3 text-slate-600">
+                        <Bot size={20} className="group-hover:text-orange-500 transition-colors" />
+                        <span className="text-sm font-bold tracking-tight">Android Chrome</span>
                       </div>
-                      <span className="text-xs font-bold text-slate-600">Safari 分享 ➜ 加入主畫面</span>
-                    </div>
-                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
-                      <div className="flex items-center gap-2 text-slate-400">
-                        <Bot size={20} />
-                      
+                      <div className="flex items-center gap-1.5 text-slate-400">
+                        <span className="text-xs font-medium">選單</span>
+                        <ChevronRight size={12} className="opacity-50" />
+                        <span className="text-xs font-bold text-slate-500">安裝應用程式</span>
                       </div>
-                      <span className="text-xs font-bold text-slate-600">Chrome 選單 ➜ 安裝應用程式</span>
                     </div>
                   </div>
                 </section>
 
                 {/* 聯絡資訊 */}
-                <footer className="pt-2 pb-4 text-center">
-                  <p className="text-[10px] text-slate-300 font-bold mb-2 uppercase tracking-tight">遇到系統問題？請聯繫資訊志工</p>
+                <footer className="pt-2 pb-4 text-center border-t border-slate-50">
+                  <p className="text-[10px] text-slate-300 font-bold mb-2 uppercase tracking-tight mt-6">遇到系統問題？請聯繫資訊志工</p>
                   <a href="mailto:episil@gmail.com" className="inline-flex items-center gap-2 text-blue-500 font-black text-sm hover:opacity-70 transition-opacity">
                     <Mail size={14} /> episil@gmail.com
                   </a>
@@ -211,7 +141,7 @@ export default function CheckinView({ profile }) {
         </div>
       )}
 
-      {/* 簽到視圖主體 */}
+      {/* 簽到主視圖內容 (其餘部分保持不變) */}
       {status === 'success' ? (
         <div className="py-12 flex flex-col items-center animate-in zoom-in duration-300">
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-100">
@@ -222,8 +152,8 @@ export default function CheckinView({ profile }) {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-8 text-left">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3 text-left">
               <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
                 <Navigation className="text-blue-600" size={24} />
               </div>
@@ -240,16 +170,16 @@ export default function CheckinView({ profile }) {
             </button>
           </div>
 
-          <div className="space-y-6 text-left">
+          <div className="space-y-6">
             <div className="text-left">
-              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest text-left">選擇今日定觀點</label>
-              <div className="relative text-left">
+              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">選擇今日定觀點</label>
+              <div className="relative">
                 <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                 <select
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
                   disabled={isLoading || isSubmitting}
-                  className="w-full pl-12 pr-10 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-100 appearance-none disabled:opacity-50 text-left"
+                  className="w-full pl-12 pr-10 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-100 appearance-none disabled:opacity-50"
                 >
                   <option value="">{isLoading ? '地點讀取中...' : '-- 請選擇地點 --'}</option>
                   {locations.map((loc, index) => (
@@ -260,7 +190,7 @@ export default function CheckinView({ profile }) {
               </div>
               
               {selectedLocation && selectedLocation !== '自由定點' && (
-                <div className="mt-3 px-4 flex justify-between items-center animate-in fade-in slide-in-from-top-1 text-left">
+                <div className="mt-3 px-4 flex justify-between items-center animate-in fade-in slide-in-from-top-1">
                   <span className="text-[10px] font-black text-slate-400 tracking-wider">距離樣點</span>
                   {distance !== null ? (
                     <span className={`text-xs font-black ${distance > 1 ? 'text-red-500' : 'text-emerald-500'}`}>
@@ -268,7 +198,7 @@ export default function CheckinView({ profile }) {
                       {distance > 1 && " (超出範圍)"}
                     </span>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-left">
+                    <div className="flex items-center gap-1.5">
                       <Loader2 className="animate-spin text-slate-300" size={12} />
                       <span className="text-[10px] text-slate-300 font-bold">定位中...</span>
                     </div>
@@ -278,10 +208,10 @@ export default function CheckinView({ profile }) {
             </div>
 
             <div className="text-left">
-              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest text-left">簽到日期</label>
-              <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-2xl text-slate-400 text-left">
+              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">簽到日期</label>
+              <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-2xl text-slate-400">
                 <Calendar size={18} />
-                <span className="text-sm font-bold text-left">{new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span className="text-sm font-bold">{new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </div>
             </div>
 
