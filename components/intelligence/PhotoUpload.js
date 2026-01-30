@@ -1,9 +1,8 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
-import { Camera, X, ImageIcon, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Camera, X, ImageIcon, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
 
 export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
   const [preview, setPreview] = useState(null);
@@ -18,7 +17,7 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
     }
   }, [clearTrigger]);
 
-  // 壓縮設定優化：調整為 200KB
+  // 壓縮設定維持 200KB (maxSizeMB: 0.2)
   const compressionOptions = {
     maxSizeMB: 0.2,          // 壓縮至 0.2MB (200KB) 以下
     maxWidthOrHeight: 1200, // 保持寬高上限，確保清晰度
@@ -35,11 +34,11 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
     setIsCompressing(true);
 
     try {
-      // 1. 產生本地預覽圖 (使用原始檔，確保反應速度)
+      // 1. 產生本地預覽圖
       const localPreview = URL.createObjectURL(file);
       setPreview(localPreview);
 
-      // 2. 執行壓縮至 200KB
+      // 2. 執行壓縮
       const compressedFile = await imageCompression(file, compressionOptions);
       
       // 3. 回傳壓縮後的檔案給父組件
@@ -59,12 +58,11 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
   };
 
   return (
-    <div className="w-full">
-      {/* 隱藏的 Input */}
+    <div className="w-full text-left">
+      {/* 隱藏的 Input：移除 capture 屬性以彈出複合選單 */}
       <input
         type="file"
         accept="image/*"
-        capture="environment"
         onChange={handleFileChange}
         ref={fileInputRef}
         className="hidden"
@@ -78,11 +76,11 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
           className="w-full h-48 border-2 border-dashed border-slate-200 rounded-[2.5rem] bg-slate-50 flex flex-col items-center justify-center gap-3 group hover:border-blue-400 hover:bg-blue-50 transition-all active:scale-[0.98]"
         >
           <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-400 group-hover:text-blue-500 transition-colors">
-            <Camera size={28} />
+            <Upload size={28} />
           </div>
           <div className="text-center">
-            <p className="text-sm font-black text-slate-500">拍下今天的發現</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Max Size: 200KB</p>
+            <p className="text-sm font-black text-slate-500">上傳照片</p>
+            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-1">Select from album or camera</p>
           </div>
         </button>
       ) : (
