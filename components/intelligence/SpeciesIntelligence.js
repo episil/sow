@@ -94,11 +94,12 @@ export default function SpeciesIntelligence({ profile }) {
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         
-        {/* 1. 照片上傳區塊 (提示已移至內部) */}
+        {/* 1. 照片上傳區塊 (提示已移至中間下方) */}
         <div className="relative group">
-          <div className="absolute top-4 right-4 z-10 pointer-events-none">
-            <span className="text-[9px] font-black text-blue-500 bg-white/80 backdrop-blur-sm border border-blue-100 px-3 py-1.5 rounded-full shadow-sm">
-              匯入照片即自動導入GPS座標
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none w-max">
+            <span className="text-[9px] font-black text-blue-500 bg-white/90 backdrop-blur-md border border-blue-100 px-4 py-2 rounded-full shadow-md flex items-center gap-2">
+              <Sparkles size={10} className="text-blue-400" />
+              自動導入照片 GPS 座標
             </span>
           </div>
           <PhotoUpload 
