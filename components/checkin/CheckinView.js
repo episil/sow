@@ -171,14 +171,14 @@ export default function CheckinView({ profile }) {
                 <section className="text-left space-y-4">
                   <div className="flex items-center gap-3">
                     <Smartphone className="text-green-600" size={16} />
-                    <h4 className="text-lg font-black text-slate-800">將系統加入桌面</h4>
+                    <h4 className="text-sm font-black text-slate-800">將系統加入桌面</h4>
                   </div>
                   
                   <div className="space-y-2">
                     {/* iOS Safari */}
                     <div className="flex justify-between items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-blue-100 transition-all">
                       <div className="flex items-center gap-3">
-                        <Share className="text-blue-500" size={18} />
+                        <Share className="text-blue-500" size={16} />
                         <span className="text-sm font-bold text-slate-700">iOS Safari</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
@@ -191,7 +191,7 @@ export default function CheckinView({ profile }) {
                     {/* Android Chrome */}
                     <div className="flex justify-between items-center bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-orange-100 transition-all">
                       <div className="flex items-center gap-3">
-                        <MoreVertical className="text-orange-500" size={18} />
+                        <MoreVertical className="text-orange-500" size={16} />
                         <span className="text-sm font-bold text-slate-700">Android Chrome</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
