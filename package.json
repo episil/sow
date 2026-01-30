@@ -18,6 +18,7 @@
     "react-calendar-heatmap": "^1.9.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.6.0",
+    "exifreader": "^4.23.3",
     "tailwindcss-animate": "^1.0.7" 
   },
   "devDependencies": {
