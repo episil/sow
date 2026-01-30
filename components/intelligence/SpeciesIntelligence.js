@@ -13,13 +13,12 @@ export default function SpeciesIntelligence({ profile }) {
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState(null);
-  const [gpsSource, setGpsSource] = useState('browser'); // 新增：追蹤 GPS 來源
+  const [gpsSource, setGpsSource] = useState('browser');
 
-  // 自動獲取 GPS 位置 (瀏覽器定位)
   const getGPSLocation = () => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
-    setGpsSource('browser'); // 重置為瀏覽器定位
+    setGpsSource('browser');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -74,7 +73,6 @@ export default function SpeciesIntelligence({ profile }) {
       setSpeciesName('');
       setDescription('');
       setTimeout(() => setStatus(null), 3000);
-
     } catch (err) {
       console.error("上傳過程出錯:", err);
       setStatus('error');
@@ -95,14 +93,19 @@ export default function SpeciesIntelligence({ profile }) {
       </div>
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+        {/* 1. 照片上傳區塊 */}
         <div className="space-y-2">
-        
+          <div className="flex items-center justify-between px-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-tighter">上傳照片</label>
+            <span className="text-[10px] font-bold text-blue-400 bg-blue-50 px-3 py-1 rounded-full">
+              匯入照片即自動導入GPS座標
+            </span>
+          </div>
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
             onLocationExtracted={(coords) => {
               setLocation({ lat: coords.lat, lng: coords.lng });
-              setGpsSource('photo'); // 標記來源為照片
-              // 3秒後自動移除提示狀態，但保留座標
+              setGpsSource('photo');
               setTimeout(() => setGpsSource('browser'), 5000);
             }}
             clearTrigger={status === 'success'} 
@@ -110,32 +113,7 @@ export default function SpeciesIntelligence({ profile }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">發現物種名稱</label>
-            <input
-              type="text"
-              value={speciesName}
-              onChange={(e) => setSpeciesName(e.target.value)}
-              placeholder="輸入物種名稱（例：人面蜘蛛）"
-              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex items-center gap-1">
-              <MessageCircle size={12} /> 發現心情分享
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="分享一下此刻的驚喜或發現故事吧..."
-              rows={3}
-              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
-            />
-          </div>
-
-          {/* 座標區塊：新增匯入成功提示 */}
+          {/* 2. 座標顯示區塊 (已搬移至此) */}
           <div className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-500 ${gpsSource === 'photo' ? 'bg-emerald-50 ring-2 ring-emerald-100' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${gpsSource === 'photo' ? 'bg-emerald-500 text-white' : 'bg-blue-100 text-blue-600'}`}>
@@ -159,12 +137,39 @@ export default function SpeciesIntelligence({ profile }) {
               type="button"
               onClick={getGPSLocation}
               className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors"
-              title="重新獲取瀏覽器位置"
             >
               <Navigation size={18} />
             </button>
           </div>
 
+          {/* 3. 物種名稱 */}
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">發現物種名稱</label>
+            <input
+              type="text"
+              value={speciesName}
+              onChange={(e) => setSpeciesName(e.target.value)}
+              placeholder="輸入物種名稱（例：人面蜘蛛）"
+              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all"
+              required
+            />
+          </div>
+
+          {/* 4. 心情分享 */}
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex items-center gap-1">
+              <MessageCircle size={12} /> 發現心情分享
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="分享一下此刻的驚喜或發現故事吧..."
+              rows={3}
+              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+            />
+          </div>
+
+          {/* 5. 提交按鈕 */}
           <button
             type="submit"
             disabled={!photoFile || !speciesName || isSubmitting}
