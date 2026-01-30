@@ -14,14 +14,12 @@ import SOWtalks from '@/components/SOWtalks';
 
 // 匯入圖標
 import { 
-  MapPinned, // 更換為更符合「在地簽到」語意的圖標
+  MapPinned, 
   Camera, 
   Trophy, 
   User as UserIcon, 
   LogOut,
   Leaf,
-  ArrowRight,
-  Sparkles,
   Settings2
 } from 'lucide-react';
 
@@ -143,7 +141,7 @@ export default function App() {
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="flex justify-between items-center mb-2 px-2">
-              <div>
+              <div className="text-left">
                 <h1 className="text-2xl font-black text-slate-800">你好，{profile.nature_name || profile.full_name}</h1>
                 <div className="flex items-center gap-2 mt-1">
                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{profile.branch} · {profile.volunteer_group}</p>
@@ -162,28 +160,6 @@ export default function App() {
             </header>
 
             <CheckinView profile={profile} />
-
-            <div 
-              onClick={() => setShowSOWtalks(true)}
-              className="group relative overflow-hidden w-full p-6 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-[2.5rem] text-white cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-emerald-100"
-            >
-              <div className="relative z-10 flex justify-between items-center">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sparkles size={16} className="text-yellow-300" />
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">近期熱門活動</span>
-                  </div>
-                  <h4 className="font-black text-lg">荒野 Show 與你</h4>
-                  <p className="text-xs opacity-80 font-bold mt-1">別讓你的發現，只留在野外</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-2xl group-hover:translate-x-1 transition-transform">
-                  <ArrowRight size={20} />
-                </div>
-              </div>
-              <div className="absolute -right-4 -bottom-4 opacity-10">
-                <Leaf size={120} />
-              </div>
-            </div>
 
             <CheckInFeedback profile={profile} />
           </div>
