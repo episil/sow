@@ -16,7 +16,7 @@ export default function AdminLogin({ onBack }) {
     setError(null);
 
     try {
-      // 1. 嘗試登入
+      // 1. 嘗試登入 (驗證 Auth 系統中的帳密)
       const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -24,20 +24,28 @@ export default function AdminLogin({ onBack }) {
 
       if (authError) throw authError;
 
-      // 2. 檢查 profiles 表中是否具備管理員權限 (is_admin 欄位)
+      // 2. 檢查 profiles 表中的管理員權限與是否需要重設密碼
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('is_admin, needs_password_reset')
         .eq('id', user.id)
         .single();
 
       if (profileError || !profile?.is_admin) {
-        // 如果不是管理員，強制登出
+        // 如果不是管理員，強制登出，確保安全
         await supabase.auth.signOut();
         throw new Error('存取拒絕：您不具備管理員權限。');
       }
 
-      // 3. 登入成功，導向管理後台 (此處可根據需求調整)
+      // 3. 檢查是否為第一次登入（需要重設密碼）
+      if (profile.needs_password_reset) {
+        alert("這是您第一次登入，請先修改初始密碼。");
+        // 導向修改密碼頁面 (請確保您的路由中有此路徑)
+        window.location.href = '/admin/reset-password';
+        return; // 中止後續跳轉
+      }
+
+      // 4. 登入成功且無須重設，導向管理後台
       window.location.href = '/admin/dashboard'; 
 
     } catch (err) {
@@ -48,7 +56,7 @@ export default function AdminLogin({ onBack }) {
   };
 
   return (
-    <div className="min-h-[80vh] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="min-h-[80vh] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
       {/* 返回按鈕 */}
       <button 
         onClick={onBack}
