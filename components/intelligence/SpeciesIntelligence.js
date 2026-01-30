@@ -94,14 +94,8 @@ export default function SpeciesIntelligence({ profile }) {
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         
-        {/* 1. 照片上傳區塊 (提示已移至中間下方) */}
-        <div className="relative group">
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none w-max">
-            <span className="text-[9px] font-black text-blue-500 bg-white/90 backdrop-blur-md border border-blue-100 px-4 py-2 rounded-full shadow-md flex items-center gap-2">
-              <Sparkles size={10} className="text-blue-400" />
-              自動導入照片 GPS 座標
-            </span>
-          </div>
+        {/* 1. 照片上傳區塊 */}
+        <div className="space-y-4">
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
             onLocationExtracted={(coords) => {
@@ -111,6 +105,12 @@ export default function SpeciesIntelligence({ profile }) {
             }}
             clearTrigger={status === 'success'} 
           />
+          {/* 提示文字移至下方中間 */}
+          <div className="flex justify-center">
+            <span className="text-[10px] font-bold text-blue-400/80 tracking-tight flex items-center gap-1.5">
+              <Sparkles size={10} /> 匯入照片即自動導入 GPS 座標
+            </span>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
