@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Camera, MapPin, Send, Loader2, Sparkles, Navigation, MessageCircle, Upload } from 'lucide-react';
+import { Camera, MapPin, Send, Loader2, Sparkles, Navigation, MessageCircle } from 'lucide-react';
 import PhotoUpload from './PhotoUpload';
 
 export default function SpeciesIntelligence({ profile }) {
   const [photoFile, setPhotoFile] = useState(null);
   const [speciesName, setSpeciesName] = useState('');
-  const [description, setDescription] = useState(''); // 新增：心情分享狀態
+  const [description, setDescription] = useState('');
   const [location, setLocation] = useState({ lat: null, lng: null });
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,11 +34,12 @@ export default function SpeciesIntelligence({ profile }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!photoFile || !speciesName) return;
+    // 安全檢查：確保 profile 存在
+    if (!profile?.id || !photoFile || !speciesName) return;
 
     setIsSubmitting(true);
     try {
-      // 1. 上傳照片至 Supabase Storage
+      // 1. 上傳照片
       const fileExt = photoFile.name.split('.').pop();
       const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
       const filePath = `uploads/${fileName}`;
@@ -49,18 +50,17 @@ export default function SpeciesIntelligence({ profile }) {
 
       if (uploadError) throw uploadError;
 
-      // 取得公開連結
       const { data: { publicUrl } } = supabase.storage
         .from('species-photos')
         .getPublicUrl(filePath);
 
-      // 2. 寫入資料庫記錄 (species_reports)
+      // 2. 寫入資料庫記錄
       const { error: dbError } = await supabase
         .from('species_reports')
         .insert([{
-          user_id: profile.id,
+          user_id: profile.id, // 對應 SQL 的 user_id 欄位
           species_name: speciesName,
-          description: description, // 寫入心情分享內容
+          description: description,
           image_url: publicUrl,
           latitude: location.lat,
           longitude: location.lng,
@@ -74,11 +74,12 @@ export default function SpeciesIntelligence({ profile }) {
       setStatus('success');
       setPhotoFile(null);
       setSpeciesName('');
-      setDescription(''); // 清空心情內容
+      setDescription('');
+      // 3秒後移除成功狀態
       setTimeout(() => setStatus(null), 3000);
 
     } catch (err) {
-      console.error(err);
+      console.error("上傳過程出錯:", err);
       setStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -86,8 +87,7 @@ export default function SpeciesIntelligence({ profile }) {
   };
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
+    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
       <div className="px-2">
         <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
           <Camera className="text-blue-500" /> 物種情報站
@@ -97,34 +97,33 @@ export default function SpeciesIntelligence({ profile }) {
         </p>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6 text-left">
-        
-        {/* 修改 1: 將標題改為「上傳照片」並註明「unlimit」 */}
+      <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         <div className="space-y-2">
-          <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex justify-between items-center">
-            <span>上傳照片</span>
-            <span className="text-[10px] text-slate-300">MAX SIZE: UNLIMIT</span>
+          <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">
+            上傳照片
           </label>
-          <PhotoUpload onImageProcessed={(file) => setPhotoFile(file)} />
+          {/* 傳入 clearTrigger 當狀態為 success 時重置預覽圖 */}
+          <PhotoUpload 
+            onImageProcessed={(file) => setPhotoFile(file)} 
+            clearTrigger={status === 'success'} 
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 物種名稱輸入 */}
-          <div className="space-y-2 text-left">
-            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter text-left">發現物種名稱</label>
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">發現物種名稱</label>
             <input
               type="text"
               value={speciesName}
               onChange={(e) => setSpeciesName(e.target.value)}
               placeholder="輸入物種名稱（例：人面蜘蛛）"
-              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all text-left"
+              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all"
               required
             />
           </div>
 
-          {/* 修改 2: 增加心情分享欄位 */}
-          <div className="space-y-2 text-left">
-            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex items-center gap-1 text-left">
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex items-center gap-1">
               <MessageCircle size={12} /> 發現心情分享
             </label>
             <textarea
@@ -132,17 +131,16 @@ export default function SpeciesIntelligence({ profile }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="分享一下此刻的驚喜或發現故事吧..."
               rows={3}
-              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all resize-none text-left"
+              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
             />
           </div>
 
-          {/* GPS 座標顯示區 */}
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
                 <MapPin size={20} />
               </div>
-              <div className="text-left">
+              <div>
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">目前定位座標</div>
                 <div className="text-xs font-bold text-slate-600">
                   {isLocating ? '定位中...' : location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : '未獲取位置'}
@@ -158,7 +156,6 @@ export default function SpeciesIntelligence({ profile }) {
             </button>
           </div>
 
-          {/* 提交按鈕 */}
           <button
             type="submit"
             disabled={!photoFile || !speciesName || isSubmitting}
