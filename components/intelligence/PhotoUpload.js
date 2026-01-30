@@ -2,25 +2,24 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
+import ExifReader from 'exifreader'; // 引入 EXIF 解析套件
 import { X, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
 
-export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
+export default function PhotoUpload({ onImageProcessed, onLocationExtracted, clearTrigger }) {
   const [preview, setPreview] = useState(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // 監聽外部清除指令 (例如提交成功後重置)
   useEffect(() => {
     if (clearTrigger) {
       handleClear();
     }
   }, [clearTrigger]);
 
-  // 壓縮設定維持 200KB (maxSizeMB: 0.2)
   const compressionOptions = {
-    maxSizeMB: 0.2,          // 壓縮至 0.2MB (200KB) 以下
-    maxWidthOrHeight: 1200, // 保持寬高上限
+    maxSizeMB: 0.2,
+    maxWidthOrHeight: 1200,
     useWebWorker: true,
     initialQuality: 0.7
   };
@@ -33,17 +32,33 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
     setIsCompressing(true);
 
     try {
-      // 1. 產生本地預覽圖
+      // 1. 先解析 GPS 資訊 (必須使用原始檔案 file)
+      try {
+        const tags = await ExifReader.load(file);
+        if (tags.GPSLatitude && tags.GPSLongitude) {
+          const lat = tags.GPSLatitude.description;
+          const lng = tags.GPSLongitude.description;
+          
+          // 如果有抓到座標，回傳給父組件
+          if (onLocationExtracted) {
+            onLocationExtracted({ lat, lng });
+          }
+        }
+      } catch (exifErr) {
+        console.log("照片不含 GPS 數據或解析失敗");
+      }
+
+      // 2. 產生預覽圖
       const localPreview = URL.createObjectURL(file);
       setPreview(localPreview);
 
-      // 2. 執行壓縮至 200KB
+      // 3. 執行壓縮
       const compressedFile = await imageCompression(file, compressionOptions);
       
-      // 3. 回傳壓縮後的檔案
+      // 4. 回傳壓縮後的檔案
       onImageProcessed(compressedFile);
     } catch (err) {
-      console.error('壓縮失敗:', err);
+      console.error('處理失敗:', err);
       setError('照片處理失敗，請再試一次');
     } finally {
       setIsCompressing(false);
@@ -58,7 +73,6 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
 
   return (
     <div className="w-full text-left">
-      {/* 隱藏的 Input：移除所有 capture 屬性，確保直接跳轉「選擇照片」選單 */}
       <input
         type="file"
         accept="image/*"
@@ -68,7 +82,6 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
       />
 
       {!preview ? (
-        /* 未上傳狀態 */
         <button
           type="button"
           onClick={() => fileInputRef.current.click()}
@@ -83,7 +96,6 @@ export default function PhotoUpload({ onImageProcessed, clearTrigger }) {
           </div>
         </button>
       ) : (
-        /* 已上傳預覽狀態 */
         <div className="relative w-full h-64 rounded-[2.5rem] overflow-hidden shadow-lg border border-white">
           <img 
             src={preview} 
