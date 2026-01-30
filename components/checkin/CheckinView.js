@@ -15,8 +15,8 @@ import {
   Mail,
   Apple,
   Bot,
-  ChevronRight,
-  Share
+  Share,
+  MoreVertical
 } from 'lucide-react';
 
 export default function CheckinView({ profile }) {
@@ -106,9 +106,8 @@ export default function CheckinView({ profile }) {
   };
 
   return (
-    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative">
+    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative text-left">
       
-      {/* 幫助說明彈窗 */}
       {showHelp && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col text-left">
@@ -125,8 +124,7 @@ export default function CheckinView({ profile }) {
                 </button>
               </div>
 
-              <div className="space-y-8">
-                {/* 簽到步驟 */}
+              <div className="space-y-8 text-left">
                 <section>
                   <h4 className="flex items-center gap-2 text-sm font-black text-blue-600 mb-3 uppercase tracking-wider">
                     <div className="w-1 h-4 bg-blue-600 rounded-full" /> 簽到步驟
@@ -153,7 +151,6 @@ export default function CheckinView({ profile }) {
                   </div>
                 </section>
 
-                {/* Q&A */}
                 <section>
                   <h4 className="flex items-center gap-2 text-sm font-black text-slate-800 mb-3 uppercase tracking-wider">
                     <Smartphone size={16} /> 常見問題 Q&A
@@ -174,47 +171,44 @@ export default function CheckinView({ profile }) {
                   </div>
                 </section>
 
-                {/* 將系統加入桌面 - 根據圖片修改的新排版 */}
-                <section className="space-y-3">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Smartphone className="text-green-600" size={24} />
-                    <h4 className="text-lg font-black text-slate-800">將系統加入桌面</h4>
+                {/* 修改後的 將系統加入桌面 區塊 */}
+                <section className="space-y-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+                      <Smartphone className="text-green-600" size={18} />
+                    </div>
+                    <h4 className="text-[15px] font-black text-slate-800">將系統加入桌面</h4>
                   </div>
                   
-                  <div className="space-y-3">
-                    {/* iOS 卡片 */}
-                    <div className="flex justify-between items-center bg-white px-5 py-4 rounded-2xl shadow-sm border border-slate-100">
+                  <div className="space-y-2">
+                    {/* iOS Safari */}
+                    <div className="flex items-center justify-between bg-white px-6 py-4 rounded-[1.5rem] border border-slate-100 shadow-sm transition-all hover:bg-slate-50/50">
                       <div className="flex items-center gap-4">
-                        <Share className="text-blue-500" size={20} />
-                        <span className="text-base font-bold text-slate-700">iOS Safari</span>
+                        <Share size={18} className="text-blue-500" />
+                        <span className="text-[15px] font-bold text-slate-600">iOS Safari</span>
                       </div>
-                      <div className="flex items-center gap-1 text-slate-400 font-bold text-sm">
+                      <div className="flex items-center gap-2 text-[13px] font-bold text-slate-400">
                         <span>分享</span>
-                        <ChevronRight size={14} className="mt-0.5" />
+                        <span className="text-slate-300">➜</span>
                         <span>加入主畫面</span>
                       </div>
                     </div>
 
-                    {/* Android 卡片 */}
-                    <div className="flex justify-between items-center bg-white px-5 py-4 rounded-2xl shadow-sm border border-slate-100">
-                      <div className="flex items-center gap-4 text-orange-500">
-                        <div className="flex flex-col gap-0.5">
-                            <div className="w-1 h-1 rounded-full bg-orange-500" />
-                            <div className="w-1 h-1 rounded-full bg-orange-500" />
-                            <div className="w-1 h-1 rounded-full bg-orange-500" />
-                        </div>
-                        <span className="text-base font-bold text-slate-700">Android Chrome</span>
+                    {/* Android Chrome */}
+                    <div className="flex items-center justify-between bg-white px-6 py-4 rounded-[1.5rem] border border-slate-100 shadow-sm transition-all hover:bg-slate-50/50">
+                      <div className="flex items-center gap-4">
+                        <MoreVertical size={18} className="text-orange-500" />
+                        <span className="text-[15px] font-bold text-slate-600">Android Chrome</span>
                       </div>
-                      <div className="flex items-center gap-1 text-slate-400 font-bold text-sm">
+                      <div className="flex items-center gap-2 text-[13px] font-bold text-slate-400">
                         <span>選單</span>
-                        <ChevronRight size={14} className="mt-0.5" />
+                        <span className="text-slate-300">➜</span>
                         <span>安裝應用程式</span>
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* 聯絡資訊 */}
                 <footer className="pt-2 pb-4 text-center">
                   <p className="text-[10px] text-slate-300 font-bold mb-2 uppercase tracking-tight">遇到系統問題？請聯繫資訊志工</p>
                   <a href="mailto:episil@gmail.com" className="inline-flex items-center gap-2 text-blue-500 font-black text-sm hover:opacity-70 transition-opacity">
@@ -227,7 +221,6 @@ export default function CheckinView({ profile }) {
         </div>
       )}
 
-      {/* 簽到視圖主體 */}
       {status === 'success' ? (
         <div className="py-12 flex flex-col items-center animate-in zoom-in duration-300">
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-100">
