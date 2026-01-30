@@ -92,7 +92,7 @@ export default function PhotoUpload({ onImageProcessed, onLocationExtracted, cle
           </div>
           <div className="text-center">
             <p className="text-sm font-black text-slate-500">上傳照片</p>
-            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-1">Select from photo library</p>
+          
           </div>
         </button>
       ) : (
