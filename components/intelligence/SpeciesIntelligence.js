@@ -2,16 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Camera, MapPin, Send, Loader2, Sparkles, Navigation } from 'lucide-react';
-import PhotoUpload from './PhotoUpload'; // 確保路徑正確
+import { Camera, MapPin, Send, Loader2, Sparkles, Navigation, MessageCircle, Upload } from 'lucide-react';
+import PhotoUpload from './PhotoUpload';
 
 export default function SpeciesIntelligence({ profile }) {
   const [photoFile, setPhotoFile] = useState(null);
   const [speciesName, setSpeciesName] = useState('');
+  const [description, setDescription] = useState(''); // 新增：心情分享狀態
   const [location, setLocation] = useState({ lat: null, lng: null });
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState(null); // 'success', 'error'
+  const [status, setStatus] = useState(null);
 
   // 自動獲取 GPS 位置
   const getGPSLocation = () => {
@@ -59,6 +60,7 @@ export default function SpeciesIntelligence({ profile }) {
         .insert([{
           user_id: profile.id,
           species_name: speciesName,
+          description: description, // 寫入心情分享內容
           image_url: publicUrl,
           latitude: location.lat,
           longitude: location.lng,
@@ -72,6 +74,7 @@ export default function SpeciesIntelligence({ profile }) {
       setStatus('success');
       setPhotoFile(null);
       setSpeciesName('');
+      setDescription(''); // 清空心情內容
       setTimeout(() => setStatus(null), 3000);
 
     } catch (err) {
@@ -94,21 +97,42 @@ export default function SpeciesIntelligence({ profile }) {
         </p>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-        {/* 照片上傳模組 (獨立組件) */}
-        <PhotoUpload onImageProcessed={(file) => setPhotoFile(file)} />
+      <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6 text-left">
+        
+        {/* 修改 1: 將標題改為「上傳照片」並註明「unlimit」 */}
+        <div className="space-y-2">
+          <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex justify-between items-center">
+            <span>上傳照片</span>
+            <span className="text-[10px] text-slate-300">MAX SIZE: UNLIMIT</span>
+          </label>
+          <PhotoUpload onImageProcessed={(file) => setPhotoFile(file)} />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 物種名稱輸入 */}
-          <div className="space-y-2">
-            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">發現物種名稱</label>
+          <div className="space-y-2 text-left">
+            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter text-left">發現物種名稱</label>
             <input
               type="text"
               value={speciesName}
               onChange={(e) => setSpeciesName(e.target.value)}
               placeholder="輸入物種名稱（例：人面蜘蛛）"
-              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all"
+              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all text-left"
               required
+            />
+          </div>
+
+          {/* 修改 2: 增加心情分享欄位 */}
+          <div className="space-y-2 text-left">
+            <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex items-center gap-1 text-left">
+              <MessageCircle size={12} /> 發現心情分享
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="分享一下此刻的驚喜或發現故事吧..."
+              rows={3}
+              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 transition-all resize-none text-left"
             />
           </div>
 
@@ -118,7 +142,7 @@ export default function SpeciesIntelligence({ profile }) {
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
                 <MapPin size={20} />
               </div>
-              <div>
+              <div className="text-left">
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">目前定位座標</div>
                 <div className="text-xs font-bold text-slate-600">
                   {isLocating ? '定位中...' : location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : '未獲取位置'}
