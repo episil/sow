@@ -14,7 +14,7 @@ export default function SpeciesIntelligence({ profile }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState(null);
 
-  // 自動獲取 GPS 位置
+  // 自動獲取 GPS 位置 (瀏覽器定位)
   const getGPSLocation = () => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
@@ -34,7 +34,6 @@ export default function SpeciesIntelligence({ profile }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // 安全檢查：確保 profile 存在
     if (!profile?.id || !photoFile || !speciesName) return;
 
     setIsSubmitting(true);
@@ -58,7 +57,7 @@ export default function SpeciesIntelligence({ profile }) {
       const { error: dbError } = await supabase
         .from('species_reports')
         .insert([{
-          user_id: profile.id, // 對應 SQL 的 user_id 欄位
+          user_id: profile.id,
           species_name: speciesName,
           description: description,
           image_url: publicUrl,
@@ -70,12 +69,10 @@ export default function SpeciesIntelligence({ profile }) {
 
       if (dbError) throw dbError;
 
-      // 3. 成功後重置
       setStatus('success');
       setPhotoFile(null);
       setSpeciesName('');
       setDescription('');
-      // 3秒後移除成功狀態
       setTimeout(() => setStatus(null), 3000);
 
     } catch (err) {
@@ -99,10 +96,14 @@ export default function SpeciesIntelligence({ profile }) {
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
         <div className="space-y-2">
-
-          {/* 傳入 clearTrigger 當狀態為 success 時重置預覽圖 */}
+          <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">上傳照片</label>
+          {/* 修改點：接住從照片提取的座標 */}
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
+            onLocationExtracted={(coords) => {
+              console.log("成功從照片導入座標:", coords);
+              setLocation({ lat: coords.lat, lng: coords.lng });
+            }}
             clearTrigger={status === 'success'} 
           />
         </div>
@@ -139,7 +140,9 @@ export default function SpeciesIntelligence({ profile }) {
                 <MapPin size={20} />
               </div>
               <div>
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">目前定位座標</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                  目前定位座標
+                </div>
                 <div className="text-xs font-bold text-slate-600">
                   {isLocating ? '定位中...' : location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : '未獲取位置'}
                 </div>
@@ -149,6 +152,7 @@ export default function SpeciesIntelligence({ profile }) {
               type="button"
               onClick={getGPSLocation}
               className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors"
+              title="重新獲取瀏覽器位置"
             >
               <Navigation size={18} />
             </button>
