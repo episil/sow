@@ -93,11 +93,11 @@ export default function SpeciesIntelligence({ profile }) {
       </div>
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-        {/* 1. 照片上傳區塊 */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between px-2">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-tighter">上傳照片</label>
-            <span className="text-[10px] font-bold text-blue-400 bg-blue-50 px-3 py-1 rounded-full">
+        
+        {/* 1. 照片上傳區塊 (提示已移至內部) */}
+        <div className="relative group">
+          <div className="absolute top-4 right-4 z-10 pointer-events-none">
+            <span className="text-[9px] font-black text-blue-500 bg-white/80 backdrop-blur-sm border border-blue-100 px-3 py-1.5 rounded-full shadow-sm">
               匯入照片即自動導入GPS座標
             </span>
           </div>
@@ -113,7 +113,8 @@ export default function SpeciesIntelligence({ profile }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 2. 座標顯示區塊 (已搬移至此) */}
+          
+          {/* 2. 座標顯示區塊 */}
           <div className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-500 ${gpsSource === 'photo' ? 'bg-emerald-50 ring-2 ring-emerald-100' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${gpsSource === 'photo' ? 'bg-emerald-500 text-white' : 'bg-blue-100 text-blue-600'}`}>
