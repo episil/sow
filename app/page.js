@@ -12,7 +12,7 @@ import SpeciesIntelligence from '@/components/intelligence/SpeciesIntelligence';
 import UserStats from '@/components/stats/UserStats';
 import Leaderboard from '@/components/stats/Leaderboard';
 import SOWtalks from '@/components/SOWtalks';
-import UserHistory from '@/components/history/UserHistory'; // 1. 新增匯入足跡組件
+import UserHistory from '@/components/history/UserHistory';
 
 // 匯入圖標
 import { 
@@ -36,7 +36,7 @@ export default function App() {
   const [showSOWtalks, setShowSOWtalks] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [showUserHistory, setShowUserHistory] = useState(false); // 2. 新增足跡顯示狀態
+  const [showUserHistory, setShowUserHistory] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,13 +91,16 @@ export default function App() {
     }
   };
 
+  // 判斷是否為第一次登入（尚未填寫自然名或分會）
+  const isFirstTimeUser = profile && (!profile.nature_name || profile.branch === '未設定');
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setActiveTab('home');
     setShowSOWtalks(false);
     setIsEditingProfile(false);
     setShowAdminLogin(false);
-    setShowUserHistory(false); // 登出時重置狀態
+    setShowUserHistory(false);
   };
 
   const handleProfileUpdate = (updatedProfile) => {
@@ -114,19 +117,33 @@ export default function App() {
     </div>
   );
 
-  if (!session || (!profile && !loading)) {
+  // 1. 完全未登入：顯示登入畫面
+  if (!session) {
     return <SignInView onLoginSuccess={handleProfileUpdate} />;
   }
 
-  const renderContent = () => {
-    // 優先判斷視圖層級
-    if (showAdminLogin) {
-      return <AdminLogin onBack={() => setShowAdminLogin(false)} />;
-    }
+  // 2. 登入但資料未完成：強制顯示資料編輯畫面 (SignInView 作為 profile 編輯器)
+  if (isFirstTimeUser && !isEditingProfile) {
+    return (
+      <main className="min-h-screen bg-slate-50 py-12 px-6 md:max-w-md md:mx-auto">
+        <div className="text-left mb-8">
+          <h2 className="text-2xl font-black text-slate-800">歡迎加入荒野！</h2>
+          <p className="text-slate-500 text-sm font-bold mt-2">開始之前，請先完善您的夥伴資料。</p>
+        </div>
+        <SignInView onLoginSuccess={handleProfileUpdate} existingProfile={profile} />
+        <button 
+          onClick={handleSignOut}
+          className="w-full mt-8 py-4 text-slate-400 font-bold text-xs flex items-center justify-center gap-2 hover:text-red-500 transition-colors"
+        >
+          <LogOut size={14} /> 登出帳號
+        </button>
+      </main>
+    );
+  }
 
-    if (showUserHistory) {
-      return <UserHistory onBack={() => setShowUserHistory(false)} />; // 3. 渲染足跡組件
-    }
+  const renderContent = () => {
+    if (showAdminLogin) return <AdminLogin onBack={() => setShowAdminLogin(false)} />;
+    if (showUserHistory) return <UserHistory onBack={() => setShowUserHistory(false)} />;
 
     if (showSOWtalks) {
       return (
@@ -160,9 +177,9 @@ export default function App() {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
             <header className="flex justify-between items-center mb-2 px-2">
               <div>
-                <h1 className="text-2xl font-black text-slate-800">你好，{profile.nature_name || profile.full_name}</h1>
+                <h1 className="text-2xl font-black text-slate-800">你好，{profile?.nature_name || profile?.full_name}</h1>
                 <div className="flex items-center gap-2 mt-1">
-                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{profile.branch} · {profile.volunteer_group}</p>
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{profile?.branch} · {profile?.volunteer_group}</p>
                    <button 
                      onClick={() => setIsEditingProfile(true)}
                      className="p-1 text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
@@ -180,7 +197,6 @@ export default function App() {
             <CheckinView profile={profile} />
 
             <div className="grid grid-cols-2 gap-4">
-              {/* 修改：點擊後切換至足跡頁面 */}
               <div 
                 onClick={() => setShowUserHistory(true)} 
                 className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -224,8 +240,8 @@ export default function App() {
         {renderContent()}
       </div>
 
-      {/* 4. 修改導覽列顯示條件：足跡頁面開啟時隱藏導覽列 */}
-      {!showSOWtalks && !isEditingProfile && !showAdminLogin && !showUserHistory && (
+      {/* 導覽列：僅在非強制填寫資料、非足跡、非編輯模式下顯示 */}
+      {!isFirstTimeUser && !showSOWtalks && !isEditingProfile && !showAdminLogin && !showUserHistory && (
         <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-2 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
           <NavButton 
             active={activeTab === 'home'} 
