@@ -115,7 +115,7 @@ export default function CheckInFeedback({ profile }) {
         .from('daily_feedbacks')
         .insert([{
           user_id: profile.id,
-          display_name: profile.nature_name || profile.full_name, // 傳送自然名
+          display_name: profile.nature_name || profile.full_name,
           question: question,
           content: feedback,
           branch: profile.branch,
@@ -143,7 +143,7 @@ export default function CheckInFeedback({ profile }) {
 
   return (
     <div className="w-full space-y-8">
-      {/* 填寫回饋表單 */}
+      {/* 填寫回饋卡片 */}
       <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
         {submitted ? (
           <div className="py-10 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
@@ -165,7 +165,7 @@ export default function CheckInFeedback({ profile }) {
                   <p className="text-slate-400 text-[10px] mt-1.5 font-bold uppercase tracking-widest">Feedback</p>
                 </div>
               </div>
-              <button onClick={shuffleQuestion} className="p-2 text-slate-300 hover:text-blue-500 rounded-xl transition-all active:rotate-180 duration-500">
+              <button onClick={shuffleQuestion} className="p-2 text-slate-300 hover:text-blue-500 rounded-xl transition-all">
                 <RefreshCw size={18} />
               </button>
             </div>
@@ -208,48 +208,42 @@ export default function CheckInFeedback({ profile }) {
         ) : (
           <div className="grid gap-4">
             {feedbacks.map((item, index) => (
-              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm relative group animate-in slide-in-from-bottom-4 duration-500">
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
                 
-                {/* 標籤區域：分會與組別 */}
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <div className="flex items-center gap-1 bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg">
-                    <MapPin size={10} />
-                    <span className="text-[10px] font-black">{item.branch || '荒野'}</span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-blue-50 text-blue-500 px-2.5 py-1 rounded-lg">
-                    <Leaf size={10} />
-                    <span className="text-[10px] font-black">{item.volunteer_group || '夥伴'}</span>
-                  </div>
-                </div>
-
-                {/* 志工名與日期 */}
-                
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center">
-                      <User size={12} className="text-slate-400" />
-                    </div>
-                    <span className="text-xs font-black text-slate-600">
-                      {item.display_name || '無名氏'}
+                {/* 資訊列：分會、組別、自然名 連續顯示，日期在最右側 */}
+                <div className="flex items-center gap-2 mb-4 overflow-hidden">
+                  <div className="flex items-center gap-1.5 flex-wrap flex-1">
+                    <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                      {item.branch || '荒野'}
                     </span>
+                    <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">
+                      {item.volunteer_group || '夥伴'}
+                    </span>
+                    <div className="flex items-center gap-1 ml-1">
+                      <User size={10} className="text-slate-400" />
+                      <span className="text-xs font-black text-slate-700 truncate max-w-[100px]">
+                        {item.display_name || '無名氏'}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[9px] text-slate-300 font-bold">
+                  
+                  <span className="text-[9px] text-slate-300 font-bold whitespace-nowrap text-right">
                     {new Date(item.created_at).toLocaleDateString()}
                   </span>
-                
+                </div>
 
                 <div className="bg-slate-50/50 rounded-2xl p-4 mb-8">
-                  <p className="text-slate-400 text-[10px] font-bold mb-2">問：{item.question}</p>
+                  <p className="text-slate-400 text-[10px] font-bold mb-1">問：{item.question}</p>
                   <p className="text-slate-700 font-bold text-sm leading-relaxed whitespace-pre-wrap">{item.content}</p>
                 </div>
                 
-                {/* 按讚 */}
                 <button 
                   onClick={() => handleLikeInList(item.id, index)}
                   className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-2xl transition-all active:scale-90"
                 >
                   <Heart 
                     size={16} 
-                    className={`${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300 hover:text-red-400'}`} 
+                    className={`${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} 
                   />
                   <span className={`text-xs font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
                     {item.likes_count}
