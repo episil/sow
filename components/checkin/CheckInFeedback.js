@@ -19,7 +19,7 @@ const FEEDBACK_QUESTIONS = [
 
 export default function CheckInFeedback({ profile }) {
   const [question, setQuestion] = useState("");
-  const [location, setLocation] = useState(""); // 1. 定觀地點狀態
+  const [location, setLocation] = useState(""); // 定觀地點狀態
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -31,7 +31,7 @@ export default function CheckInFeedback({ profile }) {
     setQuestion(FEEDBACK_QUESTIONS[randomIndex]);
   }, []);
 
-  // 自動根據志工組別帶出預設地點
+  // 1. 自動根據志工組別帶出預設地點
   useEffect(() => {
     if (profile?.volunteer_group) {
       setLocation(`${profile.volunteer_group}定觀點`);
@@ -125,7 +125,7 @@ export default function CheckInFeedback({ profile }) {
           user_id: profile.id,
           display_name: profile.nature_name || profile.full_name || '夥伴',
           question: question,
-          location: location, // 儲存地點
+          location: location, 
           content: feedback,
           branch: profile.branch,
           volunteer_group: profile.volunteer_group,
@@ -182,15 +182,15 @@ export default function CheckInFeedback({ profile }) {
             <div className="bg-slate-50 rounded-3xl p-6 mb-6 space-y-4">
               <h3 className="text-slate-700 font-black text-lg leading-relaxed">{question}</h3>
               
-              {/* 1. 地點詢問與輸入 */}
+              {/* 功能 1：填寫回饋的問題下方詢問定觀地點 */}
               <div className="flex items-center gap-2 bg-white/60 p-3 rounded-2xl border border-slate-100">
-                <MapPin size={14} className="text-orange-400" />
+                <MapPin size={14} className="text-orange-400 shrink-0" />
                 <input 
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="請確認或輸入今日定觀地點"
-                  className="bg-transparent border-none p-0 text-xs font-bold text-slate-500 w-full focus:ring-0"
+                  placeholder="在哪個定觀點呢？"
+                  className="bg-transparent border-none p-0 text-xs font-bold text-slate-500 w-full focus:ring-0 placeholder:text-slate-300"
                 />
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function CheckInFeedback({ profile }) {
             {feedbacks.map((item, index) => (
               <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] p-6 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
                 
-                {/* 資訊列 */}
+                {/* 資訊列：分會、組別、自然名 */}
                 <div className="flex items-center gap-2 mb-4 overflow-hidden">
                   <div className="flex items-center gap-1.5 flex-wrap flex-1">
                     <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -254,18 +254,20 @@ export default function CheckInFeedback({ profile }) {
 
                 {/* 內容區塊 */}
                 <div className="bg-slate-50/50 rounded-2xl p-4">
-                  {/* 2. 問題上方加入定觀地點 */}
+                  
+                  {/* 功能 2：於回饋內容上方加入定觀地點 */}
                   {item.location && (
                     <div className="flex items-center gap-1 mb-2">
-                      <MapPin size={10} className="text-orange-400" />
-                      <span className="text-[10px] font-black text-orange-500/80">{item.location}</span>
+                      <MapPin size={10} className="text-orange-400 shrink-0" />
+                      <span className="text-[10px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg">
+                        {item.location}
+                      </span>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <p className="text-slate-400 text-[10px] font-bold flex-1">問：{item.question}</p>
                     
-                    {/* 按讚顯示在問題同列最右側 */}
                     <button 
                       onClick={() => handleLikeInList(item.id, index)}
                       className="flex items-center gap-1.5 bg-white/80 hover:bg-red-50 px-3 py-1 rounded-xl transition-all active:scale-90 border border-slate-100 shadow-sm"
