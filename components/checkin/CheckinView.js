@@ -235,7 +235,7 @@ export default function CheckinView({ profile }) {
                 <Navigation className="text-blue-600" size={24} />
               </div>
               <div className="text-left">
-                <h2 className="text-lg font-black text-slate-800 leading-none">定觀 / 出席 / 值勤簽到</h2>
+                <h2 className="text-lg font-black text-slate-800 leading-none">定觀、出席、值勤簽到</h2>
                 <p className="text-slate-400 text-xs mt-1.5 font-bold">{profile.branch} · {profile.volunteer_group}</p>
               </div>
             </div>
