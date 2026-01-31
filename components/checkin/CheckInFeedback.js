@@ -127,6 +127,7 @@ export default function CheckInFeedback({ profile }) {
       if (error) throw error;
       
       setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       // 注意：依賴 Realtime 同步，fetchFeedbacks 可視情況移除以減少 API 呼叫
 
       setTimeout(() => {
