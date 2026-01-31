@@ -208,9 +208,9 @@ export default function CheckInFeedback({ profile }) {
         ) : (
           <div className="grid gap-4">
             {feedbacks.map((item, index) => (
-              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] p-6 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
                 
-                {/* 資訊列：分會、組別、自然名 連續顯示，日期在最右側 */}
+                {/* 第一行：分會、組別、自然名，日期在最右側 */}
                 <div className="flex items-center gap-2 mb-4 overflow-hidden">
                   <div className="flex items-center gap-1.5 flex-wrap flex-1">
                     <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -226,29 +226,35 @@ export default function CheckInFeedback({ profile }) {
                       </span>
                     </div>
                   </div>
-                  
                   <span className="text-[9px] text-slate-300 font-bold whitespace-nowrap text-right">
                     {new Date(item.created_at).toLocaleDateString()}
                   </span>
                 </div>
 
-                <div className="bg-slate-50/50 rounded-2xl p-4 mb-8">
-                  <p className="text-slate-400 text-[10px] font-bold mb-1">問：{item.question}</p>
-                  <p className="text-slate-700 font-bold text-sm leading-relaxed whitespace-pre-wrap">{item.content}</p>
+                {/* 第二行與回饋內容：問題列（含按讚）與回饋內容 */}
+                <div className="bg-slate-50/50 rounded-2xl p-4">
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <p className="text-slate-400 text-[10px] font-bold flex-1">問：{item.question}</p>
+                    
+                    {/* 按讚按鈕：顯示於問題列最右側 */}
+                    <button 
+                      onClick={() => handleLikeInList(item.id, index)}
+                      className="flex items-center gap-1.5 bg-white/80 hover:bg-red-50 px-3 py-1 rounded-xl transition-all active:scale-90 border border-slate-100 shadow-sm"
+                    >
+                      <Heart 
+                        size={14} 
+                        className={`${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} 
+                      />
+                      <span className={`text-[10px] font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
+                        {item.likes_count}
+                      </span>
+                    </button>
+                  </div>
+                  
+                  <p className="text-slate-700 font-bold text-sm leading-relaxed whitespace-pre-wrap">
+                    {item.content}
+                  </p>
                 </div>
-                
-                <button 
-                  onClick={() => handleLikeInList(item.id, index)}
-                  className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-2xl transition-all active:scale-90"
-                >
-                  <Heart 
-                    size={16} 
-                    className={`${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} 
-                  />
-                  <span className={`text-xs font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
-                    {item.likes_count}
-                  </span>
-                </button>
               </div>
             ))}
           </div>
