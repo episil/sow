@@ -21,7 +21,7 @@ import {
 export default function CheckinView({ profile }) {
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
-  const [customLocation, setCustomLocation] = useState(''); // 新增：自定義地點狀態
+  const [customLocation, setCustomLocation] = useState(''); 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState('idle');
@@ -87,17 +87,19 @@ export default function CheckinView({ profile }) {
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
   };
 
-  // 更新：判斷按鈕是否禁用
   const isCheckinDisabled = 
     !selectedLocation || 
     isSubmitting || 
-    (selectedLocation === '自由定點' && !customLocation.trim()) || // 自由定點必須輸入名稱
+    (selectedLocation === '自由定點' && !customLocation.trim()) || 
     (selectedLocation !== '自由定點' && (distance === null || distance > 1));
 
   const handleCheckin = async () => {
     setIsSubmitting(true);
-    // 更新：決定最終存入的地點名稱
-    const finalLocationName = selectedLocation === '自由定點' ? customLocation.trim() : selectedLocation;
+    
+    // 核心邏輯更新：若為自由定點，則加上括號註記
+    const finalLocationName = selectedLocation === '自由定點' 
+      ? `${customLocation.trim()}(自由定點)` 
+      : selectedLocation;
 
     try {
       const { error } = await supabase.from('checkin_records').insert([{
@@ -107,11 +109,15 @@ export default function CheckinView({ profile }) {
         volunteer_group: profile.volunteer_group
       }]);
       if (error) throw error;
+      
+      // 更新狀態以顯示帶有註記的名稱
+      setCustomLocation(finalLocationName); 
       setStatus('success');
+      
       setTimeout(() => { 
         setStatus('idle'); 
         setSelectedLocation(''); 
-        setCustomLocation(''); // 重設自定義地點
+        setCustomLocation(''); 
         setDistance(null); 
       }, 3000);
     } catch (error) {
@@ -124,10 +130,8 @@ export default function CheckinView({ profile }) {
   return (
     <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative">
       
-      {/* 幫助 Modal (略過，保持原狀) */}
       {showHelp && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-           {/* ... 原有說明內容 ... */}
            <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col text-left">
             <div className="p-6 overflow-y-auto">
               <div className="flex justify-between items-center mb-6 text-left">
@@ -151,10 +155,9 @@ export default function CheckinView({ profile }) {
                       <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">1</span>
                       <p className="text-sm font-bold leading-relaxed text-left">
                         選擇定觀地點（或自由定點）。
-                        <span className="block text-xs font-medium text-slate-400 mt-1">自由定點：需手動輸入地點，不受 GPS 距離限制。</span>
+                        <span className="block text-xs font-medium text-slate-400 mt-1">自由定點：需手動輸入地點，系統將自動標記為自由定點。</span>
                       </p>
                     </div>
-                    {/* ... 其它步驟 ... */}
                   </div>
                 </section>
               </div>
@@ -200,7 +203,7 @@ export default function CheckinView({ profile }) {
                   value={selectedLocation}
                   onChange={(e) => {
                     setSelectedLocation(e.target.value);
-                    setCustomLocation(''); // 切換時清空輸入內容
+                    setCustomLocation(''); 
                   }}
                   disabled={isLoading || isSubmitting}
                   className="w-full pl-12 pr-10 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-100 appearance-none disabled:opacity-50 text-left"
@@ -213,7 +216,6 @@ export default function CheckinView({ profile }) {
                 </select>
               </div>
 
-              {/* 自由定點選取後的文字輸入框 */}
               {selectedLocation === '自由定點' && (
                 <div className="animate-in slide-in-from-top-2 duration-300">
                   <div className="relative">
@@ -226,7 +228,7 @@ export default function CheckinView({ profile }) {
                       className="w-full pl-12 pr-4 py-4 bg-orange-50/50 border-2 border-orange-100 rounded-2xl text-sm font-bold text-slate-600 focus:ring-0 focus:border-orange-200"
                     />
                   </div>
-                  <p className="mt-2 ml-2 text-[10px] font-bold text-orange-500">※ 自由定點不限 GPS 距離，請務必填寫具體地點。</p>
+                  <p className="mt-2 ml-2 text-[10px] font-bold text-orange-500">※ 系統將在名稱後自動標註 (自由定點)。</p>
                 </div>
               )}
               
