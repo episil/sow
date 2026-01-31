@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, RefreshCw, Send, Loader2, Sparkles, Heart } from 'lucide-react'; // 新增 Heart
+import { MessageCircle, RefreshCw, Send, Loader2, Sparkles, Heart, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const FEEDBACK_QUESTIONS = [
@@ -22,11 +22,12 @@ export default function CheckInFeedback({ profile }) {
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [currentFeedbackId, setCurrentFeedbackId] = useState(null); // 用於記錄剛提交的 ID
-  const [localLikes, setLocalLikes] = useState(0); // 本地顯示讚數
+  const [feedbacks, setFeedbacks] = useState([]); // 存放近 20 則回饋
+  const [isLoadingList, setIsLoadingList] = useState(true);
 
   useEffect(() => {
     shuffleQuestion();
+    fetchFeedbacks();
   }, []);
 
   const shuffleQuestion = () => {
@@ -34,19 +35,36 @@ export default function CheckInFeedback({ profile }) {
     setQuestion(FEEDBACK_QUESTIONS[randomIndex]);
   };
 
-  // 新增：處理按讚邏輯
-  const handleLike = async () => {
-    if (!currentFeedbackId) return;
+  // 抓取最近 20 則回饋
+  const fetchFeedbacks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('daily_feedbacks')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-    // UI 立即反應 (Optimistic UI)
-    setLocalLikes(prev => prev + 1);
+      if (error) throw error;
+      setFeedbacks(data || []);
+    } catch (err) {
+      console.error('抓取回饋清單失敗:', err.message);
+    } finally {
+      setIsLoadingList(false);
+    }
+  };
+
+  // 處理清單中的按讚
+  const handleLikeInList = async (id, index) => {
+    // 立即更新本地 UI
+    const newFeedbacks = [...feedbacks];
+    newFeedbacks[index].likes_count = (newFeedbacks[index].likes_count || 0) + 1;
+    setFeedbacks(newFeedbacks);
 
     try {
-      const { error } = await supabase.rpc('increment_likes', { row_id: currentFeedbackId });
+      const { error } = await supabase.rpc('increment_likes', { row_id: id });
       if (error) throw error;
     } catch (err) {
-      console.error('按讚失敗:', err.message);
-      // 如果失敗，可以考慮把 localLikes 減回來，但為了不限次數體驗流暢，通常不強制回滾
+      console.error('點讚失敗:', err.message);
     }
   };
 
@@ -56,7 +74,7 @@ export default function CheckInFeedback({ profile }) {
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('daily_feedbacks')
         .insert([{
           user_id: profile.id,
@@ -64,24 +82,18 @@ export default function CheckInFeedback({ profile }) {
           content: feedback,
           branch: profile.branch,
           volunteer_group: profile.volunteer_group
-        }])
-        .select(); // 獲取回傳的資料以取得 ID
+        }]);
 
       if (error) throw error;
       
-      if (data && data[0]) {
-        setCurrentFeedbackId(data[0].id);
-      }
-      
       setSubmitted(true);
-      // 增加延遲，讓使用者有時間點讚
+      fetchFeedbacks(); // 提交後更新清單
+
       setTimeout(() => {
         setSubmitted(false);
         setFeedback("");
-        setCurrentFeedbackId(null);
-        setLocalLikes(0);
         shuffleQuestion();
-      }, 5000); // 延長至 5 秒
+      }, 3000);
 
     } catch (err) {
       alert('回饋傳送失敗：' + err.message);
@@ -90,99 +102,100 @@ export default function CheckInFeedback({ profile }) {
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="w-full bg-blue-50 rounded-[2.5rem] p-10 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
-        <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-100">
-          <Sparkles className="text-white" size={32} />
-        </div>
-        <h3 className="text-lg font-black text-blue-800">感謝你的分享！</h3>
-        <p className="text-blue-600/70 text-xs mt-2 font-bold mb-6">你的回饋是荒野前進的動力</p>
-        
-        {/* 按讚互動區 */}
-        <div className="flex flex-col items-center gap-2">
-          <button
-            onClick={handleLike}
-            className="group relative flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-md hover:shadow-xl active:scale-90 transition-all border-4 border-blue-100"
-          >
-            <Heart 
-              className={`transition-colors ${localLikes > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} 
-              size={32} 
-            />
-            {localLikes > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-full animate-bounce">
-                +{localLikes}
-              </span>
-            )}
-          </button>
-          <p className="text-[10px] font-black text-slate-400">點擊愛心為自己打氣！</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-      {/* ...其餘代碼保持不變... */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
-            <MessageCircle className="text-orange-500" size={24} />
+    <div className="w-full space-y-8">
+      {/* 填寫回饋卡片 */}
+      <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
+        {submitted ? (
+          <div className="py-10 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
+            <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-100">
+              <Sparkles className="text-white" size={32} />
+            </div>
+            <h3 className="text-lg font-black text-blue-800">感謝你的分享！</h3>
+            <p className="text-blue-600/70 text-xs mt-2 font-bold">你的回饋是荒野前進的動力</p>
           </div>
-          <div className="text-left">
-            <h2 className="text-lg font-black text-slate-800 leading-none">填寫活動回饋</h2>
-            <p className="text-slate-400 text-[10px] mt-1.5 font-bold uppercase tracking-widest">Post-Event Feedback</p>
-          </div>
-        </div>
-        <button 
-          onClick={shuffleQuestion}
-          className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
-        >
-          <RefreshCw size={18} />
-        </button>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
+                  <MessageCircle className="text-orange-500" size={24} />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-lg font-black text-slate-800 leading-none">填寫活動回饋</h2>
+                  <p className="text-slate-400 text-[10px] mt-1.5 font-bold uppercase tracking-widest">Post-Event Feedback</p>
+                </div>
+              </div>
+              <button onClick={shuffleQuestion} className="p-2 text-slate-300 hover:text-blue-500 rounded-xl transition-all">
+                <RefreshCw size={18} />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 rounded-3xl p-6 mb-6 relative overflow-hidden group">
+              <h3 className="text-slate-700 font-black text-lg relative z-10 leading-relaxed">{question}</h3>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="在此輸入您的心情或觀察..."
+                className="w-full p-5 bg-slate-50 border-none rounded-[2rem] text-sm font-bold text-slate-600 h-32 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
+                required
+              />
+              <button
+                type="submit"
+                disabled={!feedback.trim() || isSubmitting}
+                className={`w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
+                  feedback.trim() && !isSubmitting ? 'bg-orange-500 text-white shadow-lg active:scale-95' : 'bg-slate-100 text-slate-300'
+                }`}
+              >
+                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} />提交回饋</>}
+              </button>
+            </form>
+          </>
+        )}
       </div>
 
-      <div className="bg-slate-50 rounded-3xl p-6 mb-6 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-          <MessageCircle size={80} />
+      {/* 近期回饋清單 */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 px-4">
+          <Users className="text-slate-400" size={16} />
+          <h3 className="text-sm font-black text-slate-500 uppercase tracking-wider">大家的心得分享</h3>
         </div>
-        <h3 className="text-slate-700 font-black text-lg relative z-10 leading-relaxed">
-          {question}
-        </h3>
+
+        {isLoadingList ? (
+          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-slate-200" /></div>
+        ) : (
+          <div className="grid gap-4">
+            {feedbacks.map((item, index) => (
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-shadow relative group">
+                <div className="mb-3">
+                  <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-full uppercase">
+                    {item.volunteer_group || '夥伴'}
+                  </span>
+                </div>
+                <p className="text-slate-400 text-[10px] font-bold mb-2">問：{item.question}</p>
+                <p className="text-slate-700 font-bold text-sm leading-relaxed mb-8">{item.content}</p>
+                
+                {/* 右下角按讚區 */}
+                <button 
+                  onClick={() => handleLikeInList(item.id, index)}
+                  className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-2xl transition-all group/like"
+                >
+                  <Heart 
+                    size={16} 
+                    className={`transition-colors ${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300 group-hover/like:text-red-400'}`} 
+                  />
+                  <span className={`text-xs font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
+                    {item.likes_count || 0}
+                  </span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <textarea
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          placeholder="在此輸入您的心情或觀察..."
-          className="w-full p-5 bg-slate-50 border-none rounded-[2rem] text-sm font-bold text-slate-600 h-32 focus:ring-2 focus:ring-orange-100 transition-all resize-none placeholder:text-slate-300"
-          required
-        />
-        
-        <button
-          type="submit"
-          disabled={!feedback.trim() || isSubmitting}
-          className={`w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
-            feedback.trim() && !isSubmitting
-              ? 'bg-orange-500 text-white shadow-lg shadow-orange-100 active:scale-95'
-              : 'bg-slate-100 text-slate-300'
-          }`}
-        >
-          {isSubmitting ? (
-            <Loader2 className="animate-spin" size={20} />
-          ) : (
-            <>
-              <Send size={18} />
-              提交回饋
-            </>
-          )}
-        </button>
-      </form>
-
-      <p className="mt-6 text-[10px] text-slate-300 font-bold text-center">
-        您的回饋將協助我們優化未來的定觀活動
-      </p>
     </div>
   );
 }
