@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Camera, MapPin, Send, Loader2, Sparkles, Navigation, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { 
+  Camera, MapPin, Send, Loader2, Sparkles, Navigation, 
+  MessageCircle, CheckCircle2, Heart, User, Users 
+} from 'lucide-react';
 import PhotoUpload from './PhotoUpload';
 
 export default function SpeciesIntelligence({ profile }) {
@@ -14,6 +17,10 @@ export default function SpeciesIntelligence({ profile }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState(null);
   const [gpsSource, setGpsSource] = useState('browser');
+  
+  // 新增：列表相關狀態
+  const [reports, setReports] = useState([]);
+  const [isLoadingList, setIsLoadingList] = useState(true);
 
   const getGPSLocation = () => {
     if (!navigator.geolocation) return;
@@ -31,7 +38,54 @@ export default function SpeciesIntelligence({ profile }) {
     );
   };
 
-  useEffect(() => { getGPSLocation(); }, []);
+  // 新增：抓取情報列表
+  const fetchReports = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('species_reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setReports(data || []);
+    } catch (err) {
+      console.error('抓取情報失敗:', err.message);
+    } finally {
+      setIsLoadingList(false);
+    }
+  }, []);
+
+  useEffect(() => { 
+    getGPSLocation(); 
+    fetchReports();
+
+    // 建立 Realtime 監聽
+    const channel = supabase
+      .channel('species_reports_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'species_reports' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setReports(prev => [payload.new, ...prev].slice(0, 20));
+        } else if (payload.eventType === 'UPDATE') {
+          setReports(prev => prev.map(r => r.id === payload.new.id ? payload.new : r));
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchReports]);
+
+  // 新增：點讚邏輯
+  const handleLike = async (id) => {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, likes_count: (r.likes_count || 0) + 1 } : r));
+    try {
+      const { error } = await supabase.rpc('increment_species_likes', { row_id: id });
+      if (error) throw error;
+    } catch (err) {
+      console.error('點讚失敗:', err.message);
+      fetchReports();
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,13 +111,15 @@ export default function SpeciesIntelligence({ profile }) {
         .from('species_reports')
         .insert([{
           user_id: profile.id,
+          display_name: profile.nature_name || profile.full_name || '夥伴',
           species_name: speciesName,
           description: description,
           image_url: publicUrl,
           latitude: location.lat,
           longitude: location.lng,
           branch: profile.branch,
-          volunteer_group: profile.volunteer_group
+          volunteer_group: profile.volunteer_group,
+          likes_count: 0
         }]);
 
       if (dbError) throw dbError;
@@ -72,6 +128,7 @@ export default function SpeciesIntelligence({ profile }) {
       setPhotoFile(null);
       setSpeciesName('');
       setDescription('');
+      fetchReports();
       setTimeout(() => setStatus(null), 3000);
     } catch (err) {
       console.error("上傳過程出錯:", err);
@@ -82,7 +139,7 @@ export default function SpeciesIntelligence({ profile }) {
   };
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
       <div className="px-2">
         <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
           <Camera className="text-blue-500" /> 物種情報站
@@ -93,8 +150,6 @@ export default function SpeciesIntelligence({ profile }) {
       </div>
 
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-        
-        {/* 1. 照片上傳區塊 */}
         <div className="relative group">
           <PhotoUpload 
             onImageProcessed={(file) => setPhotoFile(file)} 
@@ -105,8 +160,6 @@ export default function SpeciesIntelligence({ profile }) {
             }}
             clearTrigger={status === 'success'} 
           />
-          
-          {/* 中間偏下方的簡潔提示標籤 */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none w-full flex justify-center">
             <span className="text-[10px] font-black text-slate-400 bg-white/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-100/50 shadow-sm tracking-tighter">
               自動導入照片 GPS 座標
@@ -115,8 +168,6 @@ export default function SpeciesIntelligence({ profile }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {/* 2. 座標顯示區塊 */}
           <div className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-500 ${gpsSource === 'photo' ? 'bg-emerald-50 ring-2 ring-emerald-100' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${gpsSource === 'photo' ? 'bg-emerald-500 text-white' : 'bg-blue-100 text-blue-600'}`}>
@@ -136,16 +187,11 @@ export default function SpeciesIntelligence({ profile }) {
                 </div>
               </div>
             </div>
-            <button 
-              type="button"
-              onClick={getGPSLocation}
-              className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors"
-            >
+            <button type="button" onClick={getGPSLocation} className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors">
               <Navigation size={18} />
             </button>
           </div>
 
-          {/* 3. 物種名稱 */}
           <div className="space-y-2">
             <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter">發現物種名稱</label>
             <input
@@ -158,7 +204,6 @@ export default function SpeciesIntelligence({ profile }) {
             />
           </div>
 
-          {/* 4. 心情分享 */}
           <div className="space-y-2">
             <label className="text-xs font-black text-slate-400 px-2 uppercase tracking-tighter flex items-center gap-1">
               <MessageCircle size={12} /> 發現心情分享
@@ -172,36 +217,93 @@ export default function SpeciesIntelligence({ profile }) {
             />
           </div>
 
-          {/* 5. 提交按鈕 */}
           <button
             type="submit"
             disabled={!photoFile || !speciesName || isSubmitting}
             className={`w-full py-5 rounded-3xl font-black text-sm flex items-center justify-center gap-3 transition-all ${
-              photoFile && speciesName && !isSubmitting
-                ? 'bg-blue-600 text-white shadow-xl shadow-blue-100 active:scale-95'
-                : 'bg-slate-100 text-slate-300'
+              photoFile && speciesName && !isSubmitting ? 'bg-blue-600 text-white shadow-xl shadow-blue-100 active:scale-95' : 'bg-slate-100 text-slate-300'
             }`}
           >
-            {isSubmitting ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : status === 'success' ? (
-              <Sparkles size={20} className="text-yellow-300" />
-            ) : (
-              <>
-                <Send size={18} />
-                發佈回報情報
-              </>
-            )}
+            {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : status === 'success' ? <Sparkles size={20} className="text-yellow-300" /> : <><Send size={18} />發佈回報情報</>}
             {status === 'success' ? '情報上傳成功！' : isSubmitting ? '處理中...' : ''}
           </button>
         </form>
+      </div>
+
+      {/* 新增：物種情報列表區塊 */}
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center gap-2 px-4">
+          <Users className="text-slate-400" size={16} />
+          <h3 className="text-sm font-black text-slate-500 uppercase tracking-wider">最新物種情報分享</h3>
+        </div>
+
+        {isLoadingList ? (
+          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-slate-200" /></div>
+        ) : (
+          <div className="grid gap-6">
+            {reports.map((item) => (
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] overflow-hidden shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
+                {/* 內部右上角按讚數 */}
+                <button 
+                  onClick={() => handleLike(item.id)}
+                  className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-slate-100 active:scale-90 transition-all group"
+                >
+                  <Heart size={14} className={`${(item.likes_count > 0) ? 'fill-red-500 text-red-500' : 'text-slate-300 group-hover:text-red-400'}`} />
+                  <span className={`text-xs font-black ${(item.likes_count > 0) ? 'text-red-500' : 'text-slate-400'}`}>
+                    {item.likes_count || 0}
+                  </span>
+                </button>
+
+                {/* 圖片預覽 */}
+                {item.image_url && (
+                  <div className="w-full h-48 overflow-hidden">
+                    <img src={item.image_url} alt={item.species_name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                <div className="p-6 space-y-4">
+                  {/* 分會、組別、姓名 */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{item.branch || '荒野'}</span>
+                    <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">{item.volunteer_group || '夥伴'}</span>
+                    <div className="flex items-center gap-1 ml-1">
+                      <User size={10} className="text-slate-400" />
+                      <span className="text-xs font-black text-slate-700">{item.display_name || '無名氏'}</span>
+                    </div>
+                  </div>
+
+                  {/* 物種名與座標 */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-lg font-black text-slate-800">{item.species_name}</h4>
+                      {item.latitude && (
+                        <div className="flex items-center text-[9px] text-slate-300 font-bold">
+                          <MapPin size={10} /> 座標已記錄
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 發現心情分享 */}
+                  {item.description && (
+                    <div className="bg-slate-50/80 rounded-2xl p-4">
+                      <p className="text-slate-600 text-sm font-bold leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {status === 'error' && (
         <div className="text-center text-red-500 text-xs font-bold animate-bounce">
           上傳失敗，請檢查網路連線或稍後再試。
         </div>
-      )}
+      ) }
     </div>
   );
 }
