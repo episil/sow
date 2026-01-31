@@ -223,7 +223,7 @@ export default function CheckInFeedback({ profile }) {
                 </div>
 
                 {/* 志工名與日期 */}
-                <div className="flex items-center justify-between mb-4 px-1">
+                
                   <div className="flex items-center gap-1.5">
                     <div className="w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center">
                       <User size={12} className="text-slate-400" />
@@ -235,7 +235,7 @@ export default function CheckInFeedback({ profile }) {
                   <span className="text-[9px] text-slate-300 font-bold">
                     {new Date(item.created_at).toLocaleDateString()}
                   </span>
-                </div>
+                
 
                 <div className="bg-slate-50/50 rounded-2xl p-4 mb-8">
                   <p className="text-slate-400 text-[10px] font-bold mb-2">問：{item.question}</p>
