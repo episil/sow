@@ -85,16 +85,15 @@ export default function CheckInFeedback({ profile }) {
     return () => { supabase.removeChannel(channel); };
   }, [shuffleQuestion, fetchFeedbacks]);
 
-  const handleLikeInList = async (id, index) => {
+  // 安全修正：使用 ID 進行樂觀更新，並加入回退機制
+  const handleLikeInList = async (id) => {
+    let prevFeedbacks;
+    
     setFeedbacks(current => {
-      const newList = [...current];
-      if (newList[index]) {
-        newList[index] = { 
-          ...newList[index], 
-          likes_count: (newList[index].likes_count || 0) + 1 
-        };
-      }
-      return newList;
+      prevFeedbacks = current;
+      return current.map(f => 
+        f.id === id ? { ...f, likes_count: (f.likes_count || 0) + 1 } : f
+      );
     });
 
     try {
@@ -102,7 +101,7 @@ export default function CheckInFeedback({ profile }) {
       if (error) throw error;
     } catch (err) {
       console.error('點讚失敗:', err.message);
-      fetchFeedbacks();
+      setFeedbacks(prevFeedbacks);
     }
   };
 
@@ -128,12 +127,12 @@ export default function CheckInFeedback({ profile }) {
       if (error) throw error;
       
       setSubmitted(true);
-      fetchFeedbacks();
+      // 注意：依賴 Realtime 同步，fetchFeedbacks 可視情況移除以減少 API 呼叫
 
       setTimeout(() => {
         setSubmitted(false);
         setFeedback("");
-        setLocation(""); // 提交成功後清空地點
+        setLocation(""); 
         shuffleQuestion();
       }, 3000);
 
@@ -145,11 +144,11 @@ export default function CheckInFeedback({ profile }) {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-8 animate-in fade-in duration-700">
       {/* 填寫回饋卡片 */}
       <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
         {submitted ? (
-          <div className="py-10 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
+          <div className="py-10 flex flex-col items-center justify-center animate-in zoom-in duration-500">
             <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-100">
               <Sparkles className="text-white" size={32} />
             </div>
@@ -160,7 +159,7 @@ export default function CheckInFeedback({ profile }) {
           <>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center shadow-inner">
                   <MessageCircle className="text-orange-500" size={24} />
                 </div>
                 <div className="text-left">
@@ -168,16 +167,15 @@ export default function CheckInFeedback({ profile }) {
                   <p className="text-slate-400 text-[10px] mt-1.5 font-bold uppercase tracking-widest">Feedback</p>
                 </div>
               </div>
-              <button onClick={shuffleQuestion} className="p-2 text-slate-300 hover:text-blue-500 rounded-xl transition-all">
+              <button onClick={shuffleQuestion} className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all active:rotate-180 duration-500">
                 <RefreshCw size={18} />
               </button>
             </div>
 
-            <div className="bg-slate-50 rounded-3xl p-6 mb-6 space-y-4">
+            <div className="bg-slate-50/80 rounded-3xl p-6 mb-6 space-y-4">
               <h3 className="text-slate-700 font-black text-lg leading-relaxed">{question}</h3>
               
-              {/* 地點輸入框：已更新提示文字並移除自動預設值 */}
-              <div className="flex items-center gap-2 bg-white/60 p-3 rounded-2xl border border-slate-100">
+              <div className="flex items-center gap-2 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm focus-within:ring-2 focus-within:ring-orange-100 transition-all">
                 <MapPin size={14} className="text-orange-400 shrink-0" />
                 <input 
                   type="text"
@@ -194,14 +192,14 @@ export default function CheckInFeedback({ profile }) {
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="在此分享您的觀察..."
-                className="w-full p-5 bg-slate-50 border-none rounded-[2rem] text-sm font-bold text-slate-600 h-32 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
+                className="w-full p-6 bg-slate-50 border-none rounded-[2rem] text-sm font-bold text-slate-600 h-32 focus:ring-2 focus:ring-orange-100 transition-all resize-none shadow-inner"
                 required
               />
               <button
                 type="submit"
                 disabled={!feedback.trim() || isSubmitting}
                 className={`w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
-                  feedback.trim() && !isSubmitting ? 'bg-orange-500 text-white shadow-lg active:scale-95' : 'bg-slate-100 text-slate-300'
+                  feedback.trim() && !isSubmitting ? 'bg-orange-500 text-white shadow-xl shadow-orange-100 active:scale-95 hover:bg-orange-600' : 'bg-slate-100 text-slate-300'
                 }`}
               >
                 {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} />提交回饋</>}
@@ -221,60 +219,61 @@ export default function CheckInFeedback({ profile }) {
         {isLoadingList ? (
           <div className="flex justify-center p-10"><Loader2 className="animate-spin text-slate-200" /></div>
         ) : (
-          <div className="grid gap-4">
-            {feedbacks.map((item, index) => (
-              <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] p-6 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
+          <div className="grid gap-5">
+            {feedbacks.map((item) => (
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] p-7 shadow-sm relative animate-in slide-in-from-bottom-6 duration-700">
                 
-                <div className="flex items-center gap-2 mb-4 overflow-hidden">
-                  <div className="flex items-center gap-1.5 flex-wrap flex-1">
-                    <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                      {item.branch || '荒野'}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md italic">
+                      #{item.branch || '荒野'}
                     </span>
                     <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">
                       {item.volunteer_group || '夥伴'}
                     </span>
-                    <div className="flex items-center gap-1 ml-1">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 rounded-md border border-slate-100/50">
                       <User size={10} className="text-slate-400" />
-                      <span className="text-xs font-black text-slate-700 truncate max-w-[100px]">
-                        {item.display_name || '無名氏'}
+                      <span className="text-xs font-black text-slate-700 truncate max-w-[120px]">
+                        {item.display_name}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[9px] text-slate-300 font-bold whitespace-nowrap text-right">
-                    {new Date(item.created_at).toLocaleDateString()}
+                  <span className="text-[9px] text-slate-300 font-bold bg-slate-50 px-2 py-1 rounded-full">
+                    {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
 
-                <div className="bg-slate-50/50 rounded-2xl p-4">
+                <div className="space-y-4">
                   {item.location && (
-                    <div className="flex items-center gap-1 mb-2">
-                      <MapPin size={10} className="text-orange-400 shrink-0" />
-                      <span className="text-[10px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg">
-                        {item.location}
-                      </span>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 shadow-sm transition-all hover:bg-emerald-100">
+                      <MapPin size={10} className="shrink-0" />
+                      <span className="text-[10px] font-black italic">{item.location}</span>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between gap-4 mb-2">
-                    <p className="text-slate-400 text-[10px] font-bold flex-1">問：{item.question}</p>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <p className="text-slate-400 text-[10px] font-black leading-tight bg-slate-50/50 p-2 rounded-xl inline-block">
+                        問：{item.question}
+                      </p>
+                      <p className="text-slate-700 font-bold text-sm leading-relaxed whitespace-pre-wrap pl-1">
+                        {item.content}
+                      </p>
+                    </div>
                     
                     <button 
-                      onClick={() => handleLikeInList(item.id, index)}
-                      className="flex items-center gap-1.5 bg-white/80 hover:bg-red-50 px-3 py-1 rounded-xl transition-all active:scale-90 border border-slate-100 shadow-sm"
+                      onClick={() => handleLikeInList(item.id)}
+                      className="flex flex-col items-center gap-1 bg-white hover:bg-red-50 px-3 py-2 rounded-2xl transition-all active:scale-75 border border-slate-100 shadow-sm group"
                     >
                       <Heart 
-                        size={14} 
-                        className={`${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} 
+                        size={16} 
+                        className={`transition-all duration-300 ${item.likes_count > 0 ? 'fill-red-500 text-red-500 scale-110' : 'text-slate-200 group-hover:text-red-300'}`} 
                       />
                       <span className={`text-[10px] font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
                         {item.likes_count}
                       </span>
                     </button>
                   </div>
-                  
-                  <p className="text-slate-700 font-bold text-sm leading-relaxed whitespace-pre-wrap">
-                    {item.content}
-                  </p>
                 </div>
               </div>
             ))}
