@@ -26,7 +26,7 @@ export default function UserHistory({ onBack }) {
     const { data: { user } } = await supabase.auth.getUser();
     
     let query = supabase
-      .from('checkins')
+      .from('checkin_records')
       .select(`
         created_at,
         location_name,
