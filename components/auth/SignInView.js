@@ -22,9 +22,7 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
     phone: ''
   });
 
-  // 1. 初始化與現有資料填入邏輯
   useEffect(() => {
-    // 編輯模式優先處理：防止跳轉閃爍
     if (existingProfile) {
       setFormData({
         full_name: existingProfile.full_name || '',
@@ -35,21 +33,17 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
         phone: existingProfile.phone || ''
       });
       
-      // 直接顯示表單，不走 checkUser
       setShowRegisterForm(true);
       setLoading(false);
       
-      // 背景同步 Auth User 資料，供提交時使用 ID
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) setUser(user);
       });
     } else {
-      // 正常登入註冊模式
       checkUser();
     }
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // 僅在非編輯模式下處理登入跳轉
       if (event === 'SIGNED_IN' && !existingProfile) {
         const currentUser = session?.user;
         setUser(currentUser);
@@ -179,8 +173,9 @@ export default function SignInView({ onLoginSuccess, existingProfile = null }) {
             <div className="grid grid-cols-2 gap-3">
               <InputItem icon={<Hash size={16}/>} label="期別" placeholder="解 25" 
                 value={formData.training_period} onChange={v => setFormData({...formData, training_period: v})} required />
-              <InputItem icon={<Phone size={16}/>} label="手機" placeholder="0912..." 
-                value={formData.phone} onChange={v => setFormData({...formData, phone: v})} required />
+              {/* 修改：移除手機欄位的 required，標籤會自動隱藏星號 */}
+              <InputItem icon={<Phone size={16}/>} label="手機" placeholder="選填項目" 
+                value={formData.phone} onChange={v => setFormData({...formData, phone: v})} required={false} />
             </div>
 
             <button
