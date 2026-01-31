@@ -30,7 +30,7 @@ export default function UserHistory({ onBack }) {
       .select(`
         created_at,
         location_name,
-        location_id
+        user_id
       `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
