@@ -5,13 +5,14 @@ import { supabase } from '@/lib/supabase';
 
 // 匯入所有功能組件
 import SignInView from '@/components/auth/SignInView';
-import AdminLogin from '@/components/auth/AdminLogin'; // 新增匯入管理員登入
+import AdminLogin from '@/components/auth/AdminLogin';
 import CheckinView from '@/components/checkin/CheckinView';
 import CheckInFeedback from '@/components/checkin/CheckInFeedback';
 import SpeciesIntelligence from '@/components/intelligence/SpeciesIntelligence';
 import UserStats from '@/components/stats/UserStats';
 import Leaderboard from '@/components/stats/Leaderboard';
 import SOWtalks from '@/components/SOWtalks';
+import UserHistory from '@/components/history/UserHistory'; // 1. 新增匯入足跡組件
 
 // 匯入圖標
 import { 
@@ -34,7 +35,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home'); 
   const [showSOWtalks, setShowSOWtalks] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false); // 新增狀態
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showUserHistory, setShowUserHistory] = useState(false); // 2. 新增足跡顯示狀態
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -95,6 +97,7 @@ export default function App() {
     setShowSOWtalks(false);
     setIsEditingProfile(false);
     setShowAdminLogin(false);
+    setShowUserHistory(false); // 登出時重置狀態
   };
 
   const handleProfileUpdate = (updatedProfile) => {
@@ -116,9 +119,13 @@ export default function App() {
   }
 
   const renderContent = () => {
-    // 優先判斷是否顯示管理員登入
+    // 優先判斷視圖層級
     if (showAdminLogin) {
       return <AdminLogin onBack={() => setShowAdminLogin(false)} />;
+    }
+
+    if (showUserHistory) {
+      return <UserHistory onBack={() => setShowUserHistory(false)} />; // 3. 渲染足跡組件
     }
 
     if (showSOWtalks) {
@@ -173,8 +180,9 @@ export default function App() {
             <CheckinView profile={profile} />
 
             <div className="grid grid-cols-2 gap-4">
+              {/* 修改：點擊後切換至足跡頁面 */}
               <div 
-                onClick={() => setActiveTab('profile')}
+                onClick={() => setShowUserHistory(true)} 
                 className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 mb-3 group-hover:scale-110 transition-transform">
@@ -216,7 +224,8 @@ export default function App() {
         {renderContent()}
       </div>
 
-      {!showSOWtalks && !isEditingProfile && !showAdminLogin && (
+      {/* 4. 修改導覽列顯示條件：足跡頁面開啟時隱藏導覽列 */}
+      {!showSOWtalks && !isEditingProfile && !showAdminLogin && !showUserHistory && (
         <nav className="fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl border border-white/20 h-20 rounded-[2.5rem] shadow-2xl flex items-center justify-around px-2 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2">
           <NavButton 
             active={activeTab === 'home'} 
