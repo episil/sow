@@ -209,7 +209,7 @@ export default function CheckinView({ profile }) {
                   {locations.map((loc, index) => (
                     <option key={index} value={loc.location_name}>{loc.location_name}</option>
                   ))}
-                  <option value="自由定點">📍 自由定點 (手動輸入)</option>
+                  <option value="自由定點">📍 自由定點 (不限距離)</option>
                 </select>
               </div>
 
