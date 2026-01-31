@@ -19,7 +19,6 @@ const FEEDBACK_QUESTIONS = [
 
 export default function CheckInFeedback({ profile }) {
   const [question, setQuestion] = useState("");
-  const [location, setLocation] = useState(""); // 新增：定觀地點狀態
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -30,13 +29,6 @@ export default function CheckInFeedback({ profile }) {
     const randomIndex = Math.floor(Math.random() * FEEDBACK_QUESTIONS.length);
     setQuestion(FEEDBACK_QUESTIONS[randomIndex]);
   }, []);
-
-  // 模擬獲取當日地點（實務上可從 profile 或當日活動 table 抓取）
-  useEffect(() => {
-    if (profile?.volunteer_group) {
-      setLocation(`${profile.volunteer_group}例行定觀點`);
-    }
-  }, [profile]);
 
   const fetchFeedbacks = useCallback(async () => {
     try {
@@ -123,9 +115,8 @@ export default function CheckInFeedback({ profile }) {
         .from('daily_feedbacks')
         .insert([{
           user_id: profile.id,
-          display_name: profile.nature_name || profile.full_name,
+          display_name: profile.nature_name,
           question: question,
-          location: location, // 儲存地點
           content: feedback,
           branch: profile.branch,
           volunteer_group: profile.volunteer_group,
@@ -179,20 +170,8 @@ export default function CheckInFeedback({ profile }) {
               </button>
             </div>
 
-            <div className="bg-slate-50 rounded-3xl p-6 mb-6 space-y-4">
+            <div className="bg-slate-50 rounded-3xl p-6 mb-6">
               <h3 className="text-slate-700 font-black text-lg leading-relaxed">{question}</h3>
-              
-              {/* 1. 地點自動帶出與更正 */}
-              <div className="flex items-center gap-2 bg-white/60 p-3 rounded-2xl border border-slate-100">
-                <MapPin size={14} className="text-orange-400" />
-                <input 
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="請確認或輸入定觀地點..."
-                  className="bg-transparent border-none p-0 text-xs font-bold text-slate-500 w-full focus:ring-0"
-                />
-              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -231,7 +210,7 @@ export default function CheckInFeedback({ profile }) {
             {feedbacks.map((item, index) => (
               <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] p-6 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
                 
-                {/* 資訊列：分會、組別、自然名，日期在最右側 */}
+                {/* 第一行：分會、組別、自然名，日期在最右側 */}
                 <div className="flex items-center gap-2 mb-4 overflow-hidden">
                   <div className="flex items-center gap-1.5 flex-wrap flex-1">
                     <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -252,19 +231,12 @@ export default function CheckInFeedback({ profile }) {
                   </span>
                 </div>
 
-                {/* 內容區塊 */}
+                {/* 第二行與回饋內容：問題列（含按讚）與回饋內容 */}
                 <div className="bg-slate-50/50 rounded-2xl p-4">
-                  {/* 2. 在問題上方加入地點 */}
-                  {item.location && (
-                    <div className="flex items-center gap-1 mb-2">
-                      <MapPin size={10} className="text-orange-400" />
-                      <span className="text-[10px] font-black text-orange-500/80">{item.location}</span>
-                    </div>
-                  )}
-
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <p className="text-slate-400 text-[10px] font-bold flex-1">問：{item.question}</p>
                     
+                    {/* 按讚按鈕：顯示於問題列最右側 */}
                     <button 
                       onClick={() => handleLikeInList(item.id, index)}
                       className="flex items-center gap-1.5 bg-white/80 hover:bg-red-50 px-3 py-1 rounded-xl transition-all active:scale-90 border border-slate-100 shadow-sm"
