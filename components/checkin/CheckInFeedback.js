@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { MessageCircle, RefreshCw, Send, Loader2, Sparkles, Heart, Users, MapPin } from 'lucide-react';
+import { MessageCircle, RefreshCw, Send, Loader2, Sparkles, Heart, Users, MapPin, Leaf, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const FEEDBACK_QUESTIONS = [
@@ -115,6 +115,7 @@ export default function CheckInFeedback({ profile }) {
         .from('daily_feedbacks')
         .insert([{
           user_id: profile.id,
+          display_name: profile.nature_name || profile.full_name, // 傳送自然名
           question: question,
           content: feedback,
           branch: profile.branch,
@@ -134,7 +135,7 @@ export default function CheckInFeedback({ profile }) {
       }, 3000);
 
     } catch (err) {
-      alert('回饋傳送失敗：' + err.message);
+      alert('回饋失敗：' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -142,15 +143,15 @@ export default function CheckInFeedback({ profile }) {
 
   return (
     <div className="w-full space-y-8">
-      {/* 填寫回饋卡片 */}
+      {/* 填寫回饋表單 */}
       <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
         {submitted ? (
           <div className="py-10 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
             <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-100">
               <Sparkles className="text-white" size={32} />
             </div>
-            <h3 className="text-lg font-black text-blue-800">感謝你的分享！</h3>
-            <p className="text-blue-600/70 text-xs mt-2 font-bold">你的回饋是荒野前進的動力</p>
+            <h3 className="text-lg font-black text-blue-800">感謝您的分享！</h3>
+            <p className="text-blue-600/70 text-xs mt-2 font-bold">每一則回饋都是成長的養分</p>
           </div>
         ) : (
           <>
@@ -164,7 +165,7 @@ export default function CheckInFeedback({ profile }) {
                   <p className="text-slate-400 text-[10px] mt-1.5 font-bold uppercase tracking-widest">Feedback</p>
                 </div>
               </div>
-              <button onClick={shuffleQuestion} className="p-2 text-slate-300 hover:text-blue-500 rounded-xl transition-all">
+              <button onClick={shuffleQuestion} className="p-2 text-slate-300 hover:text-blue-500 rounded-xl transition-all active:rotate-180 duration-500">
                 <RefreshCw size={18} />
               </button>
             </div>
@@ -177,7 +178,7 @@ export default function CheckInFeedback({ profile }) {
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                placeholder="在此輸入您的心得..."
+                placeholder="在此分享您的觀察..."
                 className="w-full p-5 bg-slate-50 border-none rounded-[2rem] text-sm font-bold text-slate-600 h-32 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
                 required
               />
@@ -195,7 +196,7 @@ export default function CheckInFeedback({ profile }) {
         )}
       </div>
 
-      {/* 回饋清單 */}
+      {/* 回饋清單區域 */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 px-4">
           <Users className="text-slate-400" size={16} />
@@ -207,31 +208,48 @@ export default function CheckInFeedback({ profile }) {
         ) : (
           <div className="grid gap-4">
             {feedbacks.map((item, index) => (
-              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm relative animate-in slide-in-from-bottom-4">
-                {/* 志工資訊區：分會與組別 */}
-                <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm relative group animate-in slide-in-from-bottom-4 duration-500">
+                
+                {/* 標籤區域：分會與組別 */}
+                <div className="flex flex-wrap items-center gap-2 mb-3">
                   <div className="flex items-center gap-1 bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg">
                     <MapPin size={10} />
-                    <span className="text-[10px] font-black">{item.branch || '總會'}</span>
+                    <span className="text-[10px] font-black">{item.branch || '荒野'}</span>
                   </div>
-                  <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-full">
-                    {item.volunteer_group || '夥伴'}
-                  </span>
-                  <span className="text-[9px] text-slate-300 font-bold ml-auto">
+                  <div className="flex items-center gap-1 bg-blue-50 text-blue-500 px-2.5 py-1 rounded-lg">
+                    <Leaf size={10} />
+                    <span className="text-[10px] font-black">{item.volunteer_group || '夥伴'}</span>
+                  </div>
+                </div>
+
+                {/* 志工名與日期 */}
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center">
+                      <User size={12} className="text-slate-400" />
+                    </div>
+                    <span className="text-xs font-black text-slate-600">
+                      {item.display_name || '無名氏'}
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-300 font-bold">
                     {new Date(item.created_at).toLocaleDateString()}
                   </span>
                 </div>
 
-                <p className="text-slate-400 text-[10px] font-bold mb-2">問：{item.question}</p>
-                <p className="text-slate-700 font-bold text-sm leading-relaxed mb-8 whitespace-pre-wrap">{item.content}</p>
+                <div className="bg-slate-50/50 rounded-2xl p-4 mb-8">
+                  <p className="text-slate-400 text-[10px] font-bold mb-2">問：{item.question}</p>
+                  <p className="text-slate-700 font-bold text-sm leading-relaxed whitespace-pre-wrap">{item.content}</p>
+                </div>
                 
+                {/* 按讚 */}
                 <button 
                   onClick={() => handleLikeInList(item.id, index)}
-                  className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-2xl transition-all group active:scale-90"
+                  className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-2xl transition-all active:scale-90"
                 >
                   <Heart 
                     size={16} 
-                    className={`transition-colors ${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300 group-hover:text-red-400'}`} 
+                    className={`${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300 hover:text-red-400'}`} 
                   />
                   <span className={`text-xs font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
                     {item.likes_count}
