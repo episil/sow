@@ -41,12 +41,12 @@ export default function AdminLogin({ onBack }) {
       if (profile.needs_password_reset) {
         alert("這是您第一次登入，請先修改初始密碼。");
         // 導向修改密碼頁面 (請確保您的路由中有此路徑)
-        window.location.href = '/reset-password';
+        window.location.href = './reset-password';
         return; // 中止後續跳轉
       }
 
       // 4. 登入成功且無須重設，導向管理後台
-      window.location.href = '/dashboard'; 
+      window.location.href = './dashboard'; 
 
     } catch (err) {
       setError(err.message);
