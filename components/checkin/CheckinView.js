@@ -15,7 +15,9 @@ import {
   Share,
   MoreVertical,
   Mail,
-  Edit3
+  Edit3,
+  MapPinned,
+  PlusSquare
 } from 'lucide-react';
 
 export default function CheckinView({ profile }) {
@@ -95,8 +97,6 @@ export default function CheckinView({ profile }) {
 
   const handleCheckin = async () => {
     setIsSubmitting(true);
-    
-    // 核心邏輯更新：若為自由定點，則加上括號註記
     const finalLocationName = selectedLocation === '自由定點' 
       ? `${customLocation.trim()}(自由定點)` 
       : selectedLocation;
@@ -110,7 +110,6 @@ export default function CheckinView({ profile }) {
       }]);
       if (error) throw error;
       
-      // 更新狀態以顯示帶有註記的名稱
       setCustomLocation(finalLocationName); 
       setStatus('success');
       
@@ -128,15 +127,15 @@ export default function CheckinView({ profile }) {
   };
 
   return (
-    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative">
+    <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm relative text-left">
       
       {showHelp && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col text-left">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col">
             <div className="p-6 overflow-y-auto">
-              <div className="flex justify-between items-center mb-6 text-left">
+              <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-left">
+                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
                     <Info className="text-blue-600" size={18} />
                   </div>
                   <h3 className="text-lg font-black text-slate-800">使用說明</h3>
@@ -145,21 +144,77 @@ export default function CheckinView({ profile }) {
                   <X size={20} className="text-slate-400" />
                 </button>
               </div>
-              <div className="space-y-8 text-left">
+
+              <div className="space-y-8">
+                {/* 簽到步驟 */}
                 <section>
-                  <h4 className="flex items-center gap-2 text-sm font-black text-blue-600 mb-3 uppercase tracking-wider text-left">
-                    <div className="w-1 h-4 bg-blue-600 rounded-full" /> 簽到步驟
+                  <h4 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-3 uppercase tracking-wider">
+                    <MapPinned size={14} /> 簽到步驟
                   </h4>
-                  <div className="space-y-4 text-slate-600">
-                    <div className="flex gap-3 text-left">
-                      <span className="flex-none w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black">1</span>
-                      <p className="text-sm font-bold leading-relaxed text-left">
-                        選擇定觀地點（或自由定點）。
-                        <span className="block text-xs font-medium text-slate-400 mt-1">自由定點：需手動輸入地點，系統將自動標記為自由定點。</span>
-                      </p>
+                  <div className="space-y-3">
+                    {[
+                      { s: "1", t: "選擇定觀地點（或自由定點）。", d: "自由定點：不受 GPS 距離限制，供特殊情況使用。" },
+                      { s: "2", t: "開啟 GPS 定位，確認在樣點 1公里 內。" },
+                      { s: "3", t: "填妥資料後點擊確認簽到即完成。" }
+                    ].map((item, i) => (
+                      <div key={i} className="flex gap-3">
+                        <span className="flex-none w-5 h-5 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-[10px] font-black">{item.s}</span>
+                        <div>
+                          <p className="text-sm font-bold text-slate-700">{item.t}</p>
+                          {item.d && <p className="text-[11px] text-slate-400 mt-0.5">{item.d}</p>}
+                        </div>
+                      </div>
+                    ))}
+                    <p className="text-[11px] text-orange-500 font-bold pl-8 mt-2">服勤提醒：定觀半天，依荒野規定服勤時間為一小時。</p>
+                  </div>
+                </section>
+
+                {/* 常見問題 */}
+                <section>
+                  <h4 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-3 uppercase tracking-wider">
+                    <HelpCircle size={14} /> 常見問題 Q&A
+                  </h4>
+                  <div className="bg-slate-50 p-4 rounded-2xl space-y-3 border border-slate-100">
+                    <div>
+                      <p className="text-xs font-black text-slate-700 mb-1.5 text-blue-600">Q: 如何在瀏覽器開啟 GPS 定位？</p>
+                      <ul className="text-[11px] text-slate-500 space-y-1 ml-1 font-medium">
+                        <li>• Android：Chrome 設定 ➜ 網站設定 ➜ 位置 ➜ 開啟。</li>
+                        <li>• iOS：系統設定 ➜ 隱私權 ➜ 定位服務 ➜ 允許瀏覽器使用。</li>
+                        <li>• 電腦版：點擊網址列左側鎖頭 ➜ 位置 ➜ 允許。</li>
+                      </ul>
+                    </div>
+                    <div className="pt-2 border-t border-slate-200">
+                      <p className="text-xs font-black text-slate-700 mb-1 text-blue-600">Q: 出現「Application error」？</p>
+                      <p className="text-[11px] text-slate-500 font-medium">A: 請刪除瀏覽紀錄或開啟無痕模式重新瀏覽。</p>
                     </div>
                   </div>
                 </section>
+
+                {/* 加入桌面 */}
+                <section>
+                  <h4 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-3 uppercase tracking-wider">
+                    <Smartphone size={14} /> 將系統加入桌面
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 text-center">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <p className="text-[10px] font-black text-slate-400 mb-1">iOS Safari</p>
+                      <p className="text-[11px] font-bold text-slate-600 flex items-center justify-center gap-1"><Share size={12}/> 分享 ➜ 加入主畫面</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <p className="text-[10px] font-black text-slate-400 mb-1">Android Chrome</p>
+                      <p className="text-[11px] font-bold text-slate-600 flex items-center justify-center gap-1"><PlusSquare size={12}/> 選單 ➜ 安裝程式</p>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="pt-4 border-t border-slate-100 text-center">
+                  <p className="text-[10px] text-slate-400 font-bold mb-4 flex items-center justify-center gap-2">
+                    <Mail size={12} /> 系統問題？ episil@gmail.com
+                  </p>
+                  <button onClick={() => setShowHelp(false)} className="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-100">
+                    開始使用系統
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -176,12 +231,12 @@ export default function CheckinView({ profile }) {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-8 text-left">
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
                 <Navigation className="text-blue-600" size={24} />
               </div>
-              <div className="text-left">
+              <div>
                 <h2 className="text-lg font-black text-slate-800 leading-none">定觀、出席、值勤簽到</h2>
                 <p className="text-slate-400 text-xs mt-1.5 font-bold">{profile.branch} · {profile.volunteer_group}</p>
               </div>
@@ -194,10 +249,10 @@ export default function CheckinView({ profile }) {
             </button>
           </div>
 
-          <div className="space-y-6 text-left">
-            <div className="text-left">
-              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest text-left">選擇今日定觀點</label>
-              <div className="relative text-left mb-4">
+          <div className="space-y-6">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">選擇今日定觀點</label>
+              <div className="relative mb-4">
                 <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                 <select
                   value={selectedLocation}
@@ -206,7 +261,7 @@ export default function CheckinView({ profile }) {
                     setCustomLocation(''); 
                   }}
                   disabled={isLoading || isSubmitting}
-                  className="w-full pl-12 pr-10 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-100 appearance-none disabled:opacity-50 text-left"
+                  className="w-full pl-12 pr-10 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-100 appearance-none disabled:opacity-50"
                 >
                   <option value="">{isLoading ? '地點讀取中...' : '-- 請選擇地點 --'}</option>
                   {locations.map((loc, index) => (
@@ -233,7 +288,7 @@ export default function CheckinView({ profile }) {
               )}
               
               {selectedLocation && selectedLocation !== '自由定點' && (
-                <div className="mt-3 px-4 flex justify-between items-center animate-in fade-in slide-in-from-top-1 text-left">
+                <div className="mt-3 px-4 flex justify-between items-center animate-in fade-in slide-in-from-top-1">
                   <span className="text-[10px] font-black text-slate-400 tracking-wider">距離樣點</span>
                   {distance !== null ? (
                     <span className={`text-xs font-black ${distance > 1 ? 'text-red-500' : 'text-emerald-500'}`}>
@@ -241,7 +296,7 @@ export default function CheckinView({ profile }) {
                       {distance > 1 && " (超出範圍)"}
                     </span>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-left">
+                    <div className="flex items-center gap-1.5">
                       <Loader2 className="animate-spin text-slate-300" size={12} />
                       <span className="text-[10px] text-slate-300 font-bold">定位中...</span>
                     </div>
@@ -250,11 +305,11 @@ export default function CheckinView({ profile }) {
               )}
             </div>
 
-            <div className="text-left">
-              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest text-left">簽到日期與時間</label>
-              <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-2xl text-slate-500 text-left">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">簽到日期與時間</label>
+              <div className="flex items-center gap-3 px-4 py-4 bg-slate-50 rounded-2xl text-slate-500">
                 <Calendar size={18} />
-                <span className="text-sm font-bold text-left">
+                <span className="text-sm font-bold">
                   {currentTime.toLocaleString('zh-TW', { 
                     timeZone: 'Asia/Taipei', 
                     year: 'numeric', 
