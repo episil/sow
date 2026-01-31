@@ -23,7 +23,7 @@ export const metadata = {
   description: "荒野保護協會志工專屬的定點觀察與情報回報系統",
   manifest: "/manifest.json",
   icons: {
-    icon: '/icons/icon-192x192.png',
+    icon: '/icons/icon-512x512.png',
     apple: '/icons/icon-512x512.png', // iPhone 會用這張
   },
   appleWebApp: {
