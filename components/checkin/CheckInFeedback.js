@@ -22,12 +22,31 @@ export default function CheckInFeedback({ profile }) {
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [feedbacks, setFeedbacks] = useState([]); // 存放近 20 則回饋
+  const [feedbacks, setFeedbacks] = useState([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
 
+  // 初始化與即時監聽
   useEffect(() => {
     shuffleQuestion();
     fetchFeedbacks();
+
+    // 訂閱資料庫變動，讓按讚即時同步不歸零
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'daily_feedbacks' },
+        (payload) => {
+          setFeedbacks(current => 
+            current.map(f => f.id === payload.new.id ? { ...f, likes_count: payload.new.likes_count } : f)
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const shuffleQuestion = () => {
@@ -35,7 +54,6 @@ export default function CheckInFeedback({ profile }) {
     setQuestion(FEEDBACK_QUESTIONS[randomIndex]);
   };
 
-  // 抓取最近 20 則回饋
   const fetchFeedbacks = async () => {
     try {
       const { data, error } = await supabase
@@ -45,7 +63,12 @@ export default function CheckInFeedback({ profile }) {
         .limit(20);
 
       if (error) throw error;
-      setFeedbacks(data || []);
+      // 確保 likes_count 若為 null 則顯示為 0
+      const processedData = data?.map(item => ({
+        ...item,
+        likes_count: item.likes_count || 0
+      }));
+      setFeedbacks(processedData || []);
     } catch (err) {
       console.error('抓取回饋清單失敗:', err.message);
     } finally {
@@ -53,18 +76,25 @@ export default function CheckInFeedback({ profile }) {
     }
   };
 
-  // 處理清單中的按讚
   const handleLikeInList = async (id, index) => {
-    // 立即更新本地 UI
-    const newFeedbacks = [...feedbacks];
-    newFeedbacks[index].likes_count = (newFeedbacks[index].likes_count || 0) + 1;
-    setFeedbacks(newFeedbacks);
+    // Optimistic UI 更新：先在本地加 1
+    setFeedbacks(current => {
+      const newList = [...current];
+      const target = newList[index];
+      if (target) {
+        target.likes_count = (target.likes_count || 0) + 1;
+      }
+      return newList;
+    });
 
     try {
+      // 呼叫資料庫 RPC 函數
       const { error } = await supabase.rpc('increment_likes', { row_id: id });
       if (error) throw error;
     } catch (err) {
       console.error('點讚失敗:', err.message);
+      // 若失敗則重新抓取以校正數值
+      fetchFeedbacks();
     }
   };
 
@@ -81,13 +111,14 @@ export default function CheckInFeedback({ profile }) {
           question: question,
           content: feedback,
           branch: profile.branch,
-          volunteer_group: profile.volunteer_group
+          volunteer_group: profile.volunteer_group,
+          likes_count: 0 // 明確初始化為 0
         }]);
 
       if (error) throw error;
       
       setSubmitted(true);
-      fetchFeedbacks(); // 提交後更新清單
+      await fetchFeedbacks(); // 等待資料抓取完成
 
       setTimeout(() => {
         setSubmitted(false);
@@ -104,7 +135,7 @@ export default function CheckInFeedback({ profile }) {
 
   return (
     <div className="w-full space-y-8">
-      {/* 填寫回饋卡片 */}
+      {/* 填寫回饋卡片 (保持不變) */}
       <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
         {submitted ? (
           <div className="py-10 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
@@ -169,26 +200,25 @@ export default function CheckInFeedback({ profile }) {
         ) : (
           <div className="grid gap-4">
             {feedbacks.map((item, index) => (
-              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-shadow relative group">
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-shadow relative group animate-in slide-in-from-bottom-2 duration-300">
                 <div className="mb-3">
                   <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-full uppercase">
                     {item.volunteer_group || '夥伴'}
                   </span>
                 </div>
                 <p className="text-slate-400 text-[10px] font-bold mb-2">問：{item.question}</p>
-                <p className="text-slate-700 font-bold text-sm leading-relaxed mb-8">{item.content}</p>
+                <p className="text-slate-700 font-bold text-sm leading-relaxed mb-8 whitespace-pre-wrap">{item.content}</p>
                 
-                {/* 右下角按讚區 */}
                 <button 
                   onClick={() => handleLikeInList(item.id, index)}
-                  className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-2xl transition-all group/like"
+                  className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-slate-50 hover:bg-red-50 px-4 py-2 rounded-2xl transition-all group/like active:scale-90"
                 >
                   <Heart 
                     size={16} 
                     className={`transition-colors ${item.likes_count > 0 ? 'fill-red-500 text-red-500' : 'text-slate-300 group-hover/like:text-red-400'}`} 
                   />
                   <span className={`text-xs font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
-                    {item.likes_count || 0}
+                    {item.likes_count}
                   </span>
                 </button>
               </div>
