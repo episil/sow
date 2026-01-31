@@ -43,7 +43,7 @@ export default function CheckInFeedback({ profile }) {
       
       const processedData = data?.map(item => ({
         ...item,
-        likes_count: item.likes_count ?? 0
+        likes_count_feedback: item.likes_count_feedback ?? 0 // 修改為新欄位
       }));
       setFeedbacks(processedData || []);
     } catch (err) {
@@ -67,14 +67,19 @@ export default function CheckInFeedback({ profile }) {
             setFeedbacks(current => 
               current.map(f => 
                 f.id === payload.new.id 
-                  ? { ...f, ...payload.new, likes_count: payload.new.likes_count ?? f.likes_count } 
+                  ? { 
+                      ...f, 
+                      ...payload.new, 
+                      // 修正：確保讚數欄位正確對接，並保留現有狀態
+                      likes_count_feedback: payload.new.likes_count_feedback ?? f.likes_count_feedback 
+                    } 
                   : f
               )
             );
           } else if (payload.eventType === 'INSERT') {
             setFeedbacks(current => {
               if (current.find(f => f.id === payload.new.id)) return current;
-              const newItem = { ...payload.new, likes_count: payload.new.likes_count ?? 0 };
+              const newItem = { ...payload.new, likes_count_feedback: payload.new.likes_count_feedback ?? 0 };
               return [newItem, ...current].slice(0, 20);
             });
           }
@@ -85,18 +90,18 @@ export default function CheckInFeedback({ profile }) {
     return () => { supabase.removeChannel(channel); };
   }, [shuffleQuestion, fetchFeedbacks]);
 
-  // 安全修正：使用 ID 進行樂觀更新，並加入回退機制
   const handleLikeInList = async (id) => {
     let prevFeedbacks;
     
     setFeedbacks(current => {
       prevFeedbacks = current;
       return current.map(f => 
-        f.id === id ? { ...f, likes_count: (f.likes_count || 0) + 1 } : f
+        f.id === id ? { ...f, likes_count_feedback: (f.likes_count_feedback || 0) + 1 } : f
       );
     });
 
     try {
+      // 請確認 SQL 端的 increment_likes 函數內部也已改用 likes_count_feedback
       const { error } = await supabase.rpc('increment_likes', { row_id: id });
       if (error) throw error;
     } catch (err) {
@@ -121,14 +126,13 @@ export default function CheckInFeedback({ profile }) {
           content: feedback,
           branch: profile.branch,
           volunteer_group: profile.volunteer_group,
-          likes_count: 0
+          likes_count_feedback: 0 // 修改為新欄位
         }]);
 
       if (error) throw error;
       
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      // 注意：依賴 Realtime 同步，fetchFeedbacks 可視情況移除以減少 API 呼叫
 
       setTimeout(() => {
         setSubmitted(false);
@@ -146,7 +150,7 @@ export default function CheckInFeedback({ profile }) {
 
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-700">
-      {/* 填寫回饋卡片 */}
+      {/* 填寫回饋卡片與清單 UI */}
       <div className="w-full bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
         {submitted ? (
           <div className="py-10 flex flex-col items-center justify-center animate-in zoom-in duration-500">
@@ -210,7 +214,6 @@ export default function CheckInFeedback({ profile }) {
         )}
       </div>
 
-      {/* 回饋清單區域 */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 px-4">
           <Users className="text-slate-400" size={16} />
@@ -268,10 +271,10 @@ export default function CheckInFeedback({ profile }) {
                     >
                       <Heart 
                         size={16} 
-                        className={`transition-all duration-300 ${item.likes_count > 0 ? 'fill-red-500 text-red-500 scale-110' : 'text-slate-200 group-hover:text-red-300'}`} 
+                        className={`transition-all duration-300 ${item.likes_count_feedback > 0 ? 'fill-red-500 text-red-500 scale-110' : 'text-slate-200 group-hover:text-red-300'}`} 
                       />
-                      <span className={`text-[10px] font-black ${item.likes_count > 0 ? 'text-red-500' : 'text-slate-300'}`}>
-                        {item.likes_count}
+                      <span className={`text-[10px] font-black ${item.likes_count_feedback > 0 ? 'text-red-500' : 'text-slate-300'}`}>
+                        {item.likes_count_feedback}
                       </span>
                     </button>
                   </div>
