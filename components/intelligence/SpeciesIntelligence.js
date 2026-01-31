@@ -48,7 +48,7 @@ export default function SpeciesIntelligence({ profile }) {
       if (error) throw error;
       const formattedData = (data || []).map(r => ({
         ...r,
-        likes_count: r.likes_count ?? 0
+        likes_count_species: r.likes_count_species ?? 0 // 修改為新欄位名稱
       }));
       setReports(formattedData);
     } catch (err) {
@@ -66,12 +66,20 @@ export default function SpeciesIntelligence({ profile }) {
       .channel('species_reports_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'species_reports' }, (payload) => {
         if (payload.eventType === 'INSERT') {
-          const newReport = { ...payload.new, likes_count: payload.new.likes_count ?? 0 };
+          const newReport = { 
+            ...payload.new, 
+            likes_count_species: payload.new.likes_count_species ?? 0 
+          };
           setReports(prev => [newReport, ...prev].slice(0, 20));
         } else if (payload.eventType === 'UPDATE') {
           setReports(prev => prev.map(r => 
             r.id === payload.new.id 
-              ? { ...payload.new, likes_count: payload.new.likes_count ?? 0 } 
+              ? { 
+                  ...r,           // 保留原本前端的資料
+                  ...payload.new, // 用新的資料覆蓋
+                  // 防止歸零邏輯：如果更新 payload 沒帶讚數，則保留舊數值
+                  likes_count_species: payload.new.likes_count_species ?? r.likes_count_species ?? 0 
+                } 
               : r
           ));
         }
@@ -86,11 +94,12 @@ export default function SpeciesIntelligence({ profile }) {
     setReports(prev => {
       previousReports = prev; 
       return prev.map(r => 
-        r.id === id ? { ...r, likes_count: (r.likes_count || 0) + 1 } : r
+        r.id === id ? { ...r, likes_count_species: (r.likes_count_species || 0) + 1 } : r
       );
     });
 
     try {
+      // 這裡呼叫的是 SQL 中的 RPC 函數，請確保函數內容也同步修改了欄位名
       const { error } = await supabase.rpc('increment_species_likes', { row_id: id });
       if (error) throw error;
     } catch (err) {
@@ -131,7 +140,7 @@ export default function SpeciesIntelligence({ profile }) {
           longitude: location.lng,
           branch: profile.branch,
           volunteer_group: profile.volunteer_group,
-          likes_count: 0
+          likes_count_species: 0 // 修改為新欄位名稱
         }]);
 
       if (dbError) throw dbError;
@@ -234,9 +243,9 @@ export default function SpeciesIntelligence({ profile }) {
                   onClick={() => handleLike(item.id)}
                   className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-slate-100 active:scale-90 transition-all"
                 >
-                  <Heart size={14} className={`${(item.likes_count > 0) ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} />
-                  <span className={`text-xs font-black ${(item.likes_count > 0) ? 'text-red-500' : 'text-slate-400'}`}>
-                    {item.likes_count}
+                  <Heart size={14} className={`${(item.likes_count_species > 0) ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} />
+                  <span className={`text-xs font-black ${(item.likes_count_species > 0) ? 'text-red-500' : 'text-slate-400'}`}>
+                    {item.likes_count_species}
                   </span>
                 </button>
 
@@ -247,17 +256,14 @@ export default function SpeciesIntelligence({ profile }) {
                 )}
 
                 <div className="p-6 space-y-3">
-                  {/* 使用者資訊標籤 */}
                   <div className="flex items-center gap-2 flex-wrap text-[10px] font-black">
                     <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{item.branch || '荒野'}</span>
                     <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">{item.volunteer_group || '夥伴'}</span>
                     <span className="text-slate-700 flex items-center gap-1 ml-1"><User size={10} className="text-slate-400" />{item.display_name}</span>
                   </div>
 
-                  {/* 物種名稱與「座標已記錄」標籤 */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-lg font-black text-slate-800">{item.species_name}</h4>
-                    {/* 新增：判斷有無座標並顯示微小圖示 */}
                     {item.latitude && (
                       <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
                         <MapPin size={10} />
