@@ -57,7 +57,7 @@ export default function AdminResetPassword() {
       setStatus({ type: 'success', message: '密碼重設成功！即將前往管理後台...' });
       
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/admin/dashboard';
       }, 2000);
 
     } catch (err) {
