@@ -86,7 +86,7 @@ export default function CheckInFeedback({ profile }) {
             <MessageCircle className="text-orange-500" size={24} />
           </div>
           <div className="text-left">
-            <h2 className="text-lg font-black text-slate-800 leading-none">填寫回饋</h2>
+            <h2 className="text-lg font-black text-slate-800 leading-none">填寫活動回饋</h2>
             <p className="text-slate-400 text-[10px] mt-1.5 font-bold uppercase tracking-widest">Post-Event Feedback</p>
           </div>
         </div>
