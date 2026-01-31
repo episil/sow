@@ -1,0 +1,17 @@
+{
+  "name": "荒野生活 2.0",
+  "short_name": "荒野生活",
+  "description": "荒野志工簽到與物種情報系統",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://www.google.com/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
