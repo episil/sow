@@ -2,133 +2,162 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/dist/styles.css';
-import { Trophy, Flame, Calendar, MousePointer2, Loader2 } from 'lucide-react';
+import { 
+  Calendar, 
+  MapPin, 
+  Download, 
+  ChevronLeft, 
+  Search,
+  Clock,
+  FileSpreadsheet
+} from 'lucide-react';
 
-export default function UserStats({ profile }) {
-  const [stats, setStats] = useState([]);
+export default function UserHistory({ onBack }) {
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState({ total: 0, streak: 0 });
+  const [dateRange, setDateRange] = useState({
+    start: '',
+    end: new Date().toISOString().split('T')[0]
+  });
 
-  useEffect(() => {
-    const fetchUserStats = async () => {
-      if (!profile?.id) return;
+  // 1. 抓取簽到紀錄
+  const fetchHistory = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    let query = supabase
+      .from('checkins')
+      .select(`
+        created_at,
+        location_name,
+        location_id
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-      try {
-        // 1. 從我們定義的 SQL View 抓取每日統計
-        const { data, error } = await supabase
-          .from('daily_contributions')
-          .select('contribution_date, activity_count')
-          .eq('user_id', profile.id);
+    if (dateRange.start) {
+      query = query.gte('created_at', `${dateRange.start}T00:00:00`);
+    }
+    if (dateRange.end) {
+      query = query.lte('created_at', `${dateRange.end}T23:59:59`);
+    }
 
-        if (error) throw error;
-
-        // 格式化資料以符合 Heatmap 要求 (date, count)
-        const formattedData = data.map(item => ({
-          date: item.contribution_date,
-          count: item.activity_count
-        }));
-
-        setStats(formattedData);
-
-        // 2. 計算總貢獻與目前的連擊數 (Streak)
-        const total = formattedData.reduce((acc, curr) => acc + curr.count, 0);
-        setSummary({ total, streak: calculateStreak(formattedData) });
-
-      } catch (error) {
-        console.error('抓取統計失敗:', error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserStats();
-  }, [profile]);
-
-  // 計算連續貢獻天數的簡易邏輯
-  const calculateStreak = (data) => {
-    if (data.length === 0) return 0;
-    const sortedDates = data.map(d => d.date).sort().reverse();
-    let streak = 0;
-    // 這裡僅示範邏輯，實際可根據需求優化
-    return data.length > 0 ? Math.min(data.length, 7) : 0; 
+    const { data, error } = await query;
+    if (!error) setHistory(data);
+    setLoading(false);
   };
 
-  if (loading) return (
-    <div className="w-full h-64 flex items-center justify-center text-slate-400">
-      <Loader2 className="animate-spin mr-2" size={20} /> 統計數據讀取中...
-    </div>
-  );
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  // 2. 匯出 CSV 功能
+  const exportToCSV = () => {
+    if (history.length === 0) {
+      alert("目前沒有資料可供匯出");
+      return;
+    }
+
+    // 設定 CSV 標頭
+    const headers = ["日期", "時間", "簽到地點"];
+    const rows = history.map(item => {
+      const dateObj = new Date(item.created_at);
+      return [
+        dateObj.toLocaleDateString('zh-TW'),
+        dateObj.toLocaleTimeString('zh-TW', { hour12: false }),
+        item.location_name
+      ];
+    });
+
+    // 加入 BOM 確保 Excel 開啟不編碼錯誤 (中文字顯示正常)
+    const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `荒野足跡_${dateRange.start || '全部'}_至_${dateRange.end}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="w-full space-y-6">
-      {/* 數據概覽卡片 */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-blue-600 to-blue-500 rounded-[2rem] p-6 text-white shadow-lg shadow-blue-100">
-          <Trophy size={24} className="mb-2 opacity-80" />
-          <div className="text-3xl font-black">{summary.total}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">總貢獻次數</div>
+    <div className="min-h-screen bg-slate-50 p-4 animate-in fade-in duration-500">
+      {/* 標題列 */}
+      <header className="flex items-center gap-4 mb-6">
+        <button onClick={onBack} className="p-2 bg-white rounded-xl shadow-sm text-slate-400">
+          <ChevronLeft size={24} />
+        </button>
+        <h1 className="text-xl font-black text-slate-800">我的足跡</h1>
+      </header>
+
+      {/* 篩選與匯出區 */}
+      <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">起始日期</label>
+            <input 
+              type="date" 
+              value={dateRange.start}
+              onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">結束日期</label>
+            <input 
+              type="date" 
+              value={dateRange.end}
+              onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
         </div>
-        <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm">
-          <Flame size={24} className="mb-2 text-orange-500" />
-          <div className="text-3xl font-black text-slate-800">{summary.streak}</div>
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">本週活躍度</div>
+        
+        <div className="flex gap-2">
+          <button 
+            onClick={fetchHistory}
+            className="flex-1 bg-blue-600 text-white rounded-xl py-3 font-bold text-sm flex items-center justify-center gap-2"
+          >
+            <Search size={18} /> 篩選紀錄
+          </button>
+          <button 
+            onClick={exportToCSV}
+            className="flex-1 bg-slate-800 text-white rounded-xl py-3 font-bold text-sm flex items-center justify-center gap-2"
+          >
+            <Download size={18} /> 匯出 CSV
+          </button>
         </div>
       </div>
 
-      {/* 日曆熱圖區塊 */}
-      <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
-              <Calendar className="text-green-600" size={20} />
+      {/* 列表顯示 */}
+      <div className="space-y-3">
+        {loading ? (
+          <div className="text-center py-10 text-slate-400 font-bold">讀取中...</div>
+        ) : history.length > 0 ? (
+          history.map((item, index) => (
+            <div key={index} className="bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
+                  <MapPin size={20} />
+                </div>
+                <div>
+                  <h4 className="font-black text-slate-800">{item.location_name}</h4>
+                  <div className="flex items-center gap-3 text-xs text-slate-400 font-bold mt-1">
+                    <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(item.created_at).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1"><Clock size={12} /> {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-left">
-              <h3 className="text-sm font-black text-slate-800">我的貢獻紀錄</h3>
-              <p className="text-[10px] text-slate-400 font-bold">過去一年的定觀與回報足跡</p>
-            </div>
+          ))
+        ) : (
+          <div className="bg-white rounded-[2.5rem] p-10 text-center border-2 border-dashed border-slate-200">
+            <p className="text-slate-400 font-bold">此區間尚無簽到記錄</p>
           </div>
-          <MousePointer2 size={16} className="text-slate-200" />
-        </div>
-
-        <div className="px-2">
-          <CalendarHeatmap
-            startDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))}
-            endDate={new Date()}
-            values={stats}
-            classForValue={(value) => {
-              if (!value) return 'color-empty';
-              // 根據次數決定顏色深淺
-              return `color-github-${Math.min(value.count, 4)}`;
-            }}
-            showWeekdayLabels={true}
-            weekdayLabels={['週日', '週一', '週二', '週三', '週四', '週五', '週六']}
-          />
-        </div>
-
-        {/* 圖例 */}
-        <div className="mt-6 flex items-center justify-end gap-2 text-[10px] font-bold text-slate-400">
-          <span>Less</span>
-          <div className="flex gap-1">
-            <div className="w-3 h-3 rounded-sm bg-slate-100"></div>
-            <div className="w-3 h-3 rounded-sm bg-[#c6e48b]"></div>
-            <div className="w-3 h-3 rounded-sm bg-[#7bc96f]"></div>
-            <div className="w-3 h-3 rounded-sm bg-[#239a3b]"></div>
-            <div className="w-3 h-3 rounded-sm bg-[#196127]"></div>
-          </div>
-          <span>More</span>
-        </div>
+        )}
       </div>
-
-      <style jsx global>{`
-        .react-calendar-heatmap .color-empty { fill: #f8fafc; }
-        .react-calendar-heatmap .color-github-1 { fill: #c6e48b; }
-        .react-calendar-heatmap .color-github-2 { fill: #7bc96f; }
-        .react-calendar-heatmap .color-github-3 { fill: #239a3b; }
-        .react-calendar-heatmap .color-github-4 { fill: #196127; }
-        .react-calendar-heatmap rect { rx: 2; ry: 2; }
-      `}</style>
     </div>
   );
 }
