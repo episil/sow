@@ -46,7 +46,6 @@ export default function SpeciesIntelligence({ profile }) {
         .limit(20);
 
       if (error) throw error;
-      // 確保抓取到的資料 likes_count 至少為 0
       const formattedData = (data || []).map(r => ({
         ...r,
         likes_count: r.likes_count ?? 0
@@ -82,11 +81,8 @@ export default function SpeciesIntelligence({ profile }) {
     return () => { supabase.removeChannel(channel); };
   }, [fetchReports]);
 
-  // 修復：強化樂觀更新，解決「瞬間歸零」
   const handleLike = async (id) => {
     let previousReports;
-    
-    // 1. 立即更新 UI（樂觀更新）
     setReports(prev => {
       previousReports = prev; 
       return prev.map(r => 
@@ -95,16 +91,10 @@ export default function SpeciesIntelligence({ profile }) {
     });
 
     try {
-      // 2. 呼叫後端
       const { error } = await supabase.rpc('increment_species_likes', { row_id: id });
-      
-      if (error) {
-        // 如果報錯是關於 Candidate 函數，通常是型別問題
-        throw error;
-      }
+      if (error) throw error;
     } catch (err) {
       console.error('點讚失敗:', err.message);
-      // 3. 失敗時恢復舊數據
       setReports(previousReports);
     }
   };
@@ -161,6 +151,7 @@ export default function SpeciesIntelligence({ profile }) {
 
   return (
     <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
+      {/* 標題區塊 */}
       <div className="px-2">
         <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
           <Camera className="text-blue-500" /> 物種情報站
@@ -170,18 +161,17 @@ export default function SpeciesIntelligence({ profile }) {
         </p>
       </div>
 
+      {/* 表單區塊 */}
       <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-        <div className="relative group">
-          <PhotoUpload 
-            onImageProcessed={(file) => setPhotoFile(file)} 
-            onLocationExtracted={(coords) => {
-              setLocation({ lat: coords.lat, lng: coords.lng });
-              setGpsSource('photo');
-              setTimeout(() => setGpsSource('browser'), 5000);
-            }}
-            clearTrigger={status === 'success'} 
-          />
-        </div>
+        <PhotoUpload 
+          onImageProcessed={(file) => setPhotoFile(file)} 
+          onLocationExtracted={(coords) => {
+            setLocation({ lat: coords.lat, lng: coords.lng });
+            setGpsSource('photo');
+            setTimeout(() => setGpsSource('browser'), 5000);
+          }}
+          clearTrigger={status === 'success'} 
+        />
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-500 ${gpsSource === 'photo' ? 'bg-emerald-50 ring-2 ring-emerald-100' : 'bg-slate-50'}`}>
@@ -193,37 +183,33 @@ export default function SpeciesIntelligence({ profile }) {
                 {isLocating ? '定位中...' : location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : '未獲取位置'}
               </div>
             </div>
-            <button type="button" onClick={getGPSLocation} className="p-2 text-blue-500">
+            <button type="button" onClick={getGPSLocation} className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors">
               <Navigation size={18} />
             </button>
           </div>
 
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={speciesName}
-              onChange={(e) => setSpeciesName(e.target.value)}
-              placeholder="物種名稱（例：人面蜘蛛）"
-              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100"
-              required
-            />
-          </div>
+          <input
+            type="text"
+            value={speciesName}
+            onChange={(e) => setSpeciesName(e.target.value)}
+            placeholder="物種名稱（例：人面蜘蛛）"
+            className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100"
+            required
+          />
 
-          <div className="space-y-2">
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="分享此刻的驚喜..."
-              rows={3}
-              className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 resize-none"
-            />
-          </div>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="分享此刻的驚喜..."
+            rows={3}
+            className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 resize-none"
+          />
 
           <button
             type="submit"
             disabled={!photoFile || !speciesName || isSubmitting}
             className={`w-full py-5 rounded-3xl font-black text-sm flex items-center justify-center gap-3 transition-all ${
-              photoFile && speciesName && !isSubmitting ? 'bg-blue-600 text-white shadow-xl' : 'bg-slate-100 text-slate-300'
+              photoFile && speciesName && !isSubmitting ? 'bg-blue-600 text-white shadow-xl shadow-blue-100 active:scale-95' : 'bg-slate-100 text-slate-300'
             }`}
           >
             {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : status === 'success' ? <Sparkles size={20} /> : <><Send size={18} />發佈情報</>}
@@ -231,6 +217,7 @@ export default function SpeciesIntelligence({ profile }) {
         </form>
       </div>
 
+      {/* 列表區塊 */}
       <div className="space-y-4 pt-4">
         <h3 className="text-sm font-black text-slate-500 px-4 uppercase tracking-wider flex items-center gap-2">
           <Users size={16} /> 最新物種情報
@@ -241,10 +228,11 @@ export default function SpeciesIntelligence({ profile }) {
         ) : (
           <div className="grid gap-6">
             {reports.map((item) => (
-              <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] overflow-hidden shadow-sm relative">
+              <div key={item.id} className="bg-white border border-slate-50 rounded-[2.5rem] overflow-hidden shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
+                {/* 右上角按讚按鈕 */}
                 <button 
                   onClick={() => handleLike(item.id)}
-                  className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-slate-100 active:scale-90"
+                  className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-slate-100 active:scale-90 transition-all"
                 >
                   <Heart size={14} className={`${(item.likes_count > 0) ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} />
                   <span className={`text-xs font-black ${(item.likes_count > 0) ? 'text-red-500' : 'text-slate-400'}`}>
@@ -259,14 +247,29 @@ export default function SpeciesIntelligence({ profile }) {
                 )}
 
                 <div className="p-6 space-y-3">
+                  {/* 使用者資訊標籤 */}
                   <div className="flex items-center gap-2 flex-wrap text-[10px] font-black">
-                    <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{item.branch}</span>
-                    <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded">{item.volunteer_group}</span>
-                    <span className="text-slate-700 flex items-center gap-1"><User size={10} />{item.display_name}</span>
+                    <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{item.branch || '荒野'}</span>
+                    <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">{item.volunteer_group || '夥伴'}</span>
+                    <span className="text-slate-700 flex items-center gap-1 ml-1"><User size={10} className="text-slate-400" />{item.display_name}</span>
                   </div>
-                  <h4 className="text-lg font-black text-slate-800">{item.species_name}</h4>
+
+                  {/* 物種名稱與「座標已記錄」標籤 */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-lg font-black text-slate-800">{item.species_name}</h4>
+                    {/* 新增：判斷有無座標並顯示微小圖示 */}
+                    {item.latitude && (
+                      <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                        <MapPin size={10} />
+                        <span>座標已記錄</span>
+                      </div>
+                    )}
+                  </div>
+
                   {item.description && (
-                    <p className="text-slate-600 text-sm font-bold bg-slate-50 p-4 rounded-2xl">{item.description}</p>
+                    <p className="text-slate-600 text-sm font-bold bg-slate-50 p-4 rounded-2xl leading-relaxed">
+                      {item.description}
+                    </p>
                   )}
                 </div>
               </div>
